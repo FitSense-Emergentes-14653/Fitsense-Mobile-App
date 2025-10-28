@@ -77,4 +77,20 @@ class AthleteRepository {
       athleteId: athleteId,
     );
   }
+
+  // Buscar el atleta por userId (fallback: GET /athletes y filtrar)
+  Future<AthleteModel?> findByUserIdOrNull(int userId) async {
+    final token = _session.getToken();
+
+    // Si tu API soporta query por userId, usa eso:
+    // return await remoteDataSource.findAthleteByUserId(token: token, userId: userId);
+
+    // Fallback robusto: traer lista y filtrar
+    final list = await remoteDataSource.getAllAthletes(token: token);
+    try {
+      return list.firstWhere((a) => a.userId == userId);
+    } catch (_) {
+      return null;
+    }
+  }
 }

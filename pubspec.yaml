@@ -73,6 +73,7 @@ flutter:
   assets:
      - lib/assets/images/logo.png
      - lib/assets/images/woman-training-wallpaper.png
+     - lib/assets/images/woman-training-workout-gym.png
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
