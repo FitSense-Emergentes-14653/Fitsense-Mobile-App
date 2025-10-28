@@ -52,7 +52,18 @@ class SessionService {
 
   String getRole() => _prefs?.getString('role') ?? '';
 
-  // ===================== CARETAKER =====================
+  // ===================== ATHLETE =====================
+  Future<void> setAthleteId(int athleteId) async {
+    final prefs = await _ensurePrefs();
+    print('DEBUG SessionService: Setting athleteId: $athleteId');
+    await prefs.setInt('athleteId', athleteId);
+  }
+
+  int getAthleteId() {
+    final athleteId = _prefs?.getInt('athleteId') ?? 0;
+    print('DEBUG SessionService: Getting athleteId: $athleteId');
+    return athleteId;
+  }
 
 
   // ===================== CLEAR =====================
