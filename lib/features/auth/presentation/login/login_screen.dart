@@ -13,6 +13,8 @@ import '../../../../infrastructure/services/session_service.dart';
 // Destino tras login
 import 'package:fitsense/features/auth/presentation/home/athlete_home_screen.dart';
 
+import '../register/sign_up_screen.dart';
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
   @override
@@ -297,7 +299,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     style: TextStyle(color: textG, fontSize: 13),
                   ),
                   GestureDetector(
-                    onTap: () {}, // TODO: ir a registro
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(builder: (_) => const SignUpScreen()),
+                      );
+                    },
                     child: const Text(
                       'Regístrate',
                       style: TextStyle(
