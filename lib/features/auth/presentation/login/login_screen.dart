@@ -3,17 +3,21 @@ import 'package:flutter/material.dart';
 // Fondo negro reutilizable
 import 'package:fitsense/core/widgets/drawer/background.dart';
 
-// Data layer
+// Data layer (auth)
 import '../../data/datasources/auth_remote_data_source.dart';
 import '../../domain/repositories/auth_repository.dart';
+
+// Athlete (gate)
+import '../../data/datasources/athlete_remote_data_source.dart';
+import '../../domain/repositories/athlete_repository.dart';
+import '../setup/athlete_setup_flow.dart';
 
 // Session
 import '../../../../infrastructure/services/session_service.dart';
 
-// Destino tras login
+// Destinos
 import 'package:fitsense/features/auth/presentation/home/athlete_home_screen.dart';
-
-import '../register/sign_up_screen.dart';
+import 'package:fitsense/features/auth/presentation/register/sign_up_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -25,7 +29,7 @@ class _LoginScreenState extends State<LoginScreen> {
   // --- UI/State ---
   final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
-  final _passCtrl  = TextEditingController();
+  final _passCtrl  = TextEditingController(); // <- FALTABA
   bool _obscure = true;
   bool _loading = false;
 
@@ -33,22 +37,50 @@ class _LoginScreenState extends State<LoginScreen> {
   final _session = SessionService();
   final _auth = AuthRepository(AuthRemoteDataSource());
 
-  // Navegación según rol (ajusta destinos si lo necesitas)
+  @override
+  void dispose() {
+    _emailCtrl.dispose();
+    _passCtrl.dispose();
+    super.dispose();
+  }
+
   Future<void> _goByRole(String role) async {
+    if (!mounted) return;
     final upper = role.toUpperCase();
-    Widget page;
-    switch (upper) {
-      case 'ADMIN':
-      case 'ATHLETE':
-      default:
-        page = const AthleteHomeScreen();
+
+    if (upper == 'ATHLETE') {
+      // Gate: si no existe Athlete -> Setup Flow
+      final repo = AthleteRepository(AthleteRemoteDataSource());
+      final userId = _session.getUserId();
+      debugPrint('⚙️ USER ID desde SessionService: $userId');
+      if (userId <= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error: userId no válido en sesión.')),
+        );
+        return;
+      }
+      final list = await repo.getAll(); // fallback robusto
+      final exists = list.any((a) => a.userId == userId);
+
+      if (!mounted) return;
+      if (!exists) {
+        Navigator.of(context).pushReplacement(
+          PageRouteBuilder(
+            transitionDuration: const Duration(milliseconds: 500),
+            pageBuilder: (_, __, ___) => const AthleteSetupFlow(),
+            transitionsBuilder: (_, a, __, child) =>
+                FadeTransition(opacity: a, child: child),
+          ),
+        );
+        return;
+      }
     }
 
-    if (!mounted) return;
+    // Home por defecto
     Navigator.of(context).pushReplacement(
       PageRouteBuilder(
-        transitionDuration: const Duration(milliseconds: 600),
-        pageBuilder: (_, __, ___) => page,
+        transitionDuration: const Duration(milliseconds: 500),
+        pageBuilder: (_, __, ___) => const AthleteHomeScreen(),
         transitionsBuilder: (_, a, __, child) =>
             FadeTransition(opacity: a, child: child),
       ),
@@ -60,7 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
     FocusScope.of(context).unfocus();
     setState(() => _loading = true);
-    await _session.init(); // SharedPreferences listo
+    await _session.init();
 
     try {
       final email = _emailCtrl.text.trim();
@@ -69,21 +101,30 @@ class _LoginScreenState extends State<LoginScreen> {
       final data = await _auth.signInUser(email: email, password: pass);
       if (data == null) throw Exception('No se pudo iniciar sesión');
 
-      // Token
+      // --- Token ---
       final token = (data['token'] ?? '').toString();
       if (token.isEmpty) throw Exception('Token no recibido');
       await _session.setToken(token);
 
-      // (Opcional) Guarda userId si viene
-      if (data['user'] is Map && data['user']['id'] != null) {
-        await _session.setUserId(int.tryParse('${data['user']['id']}') ?? -1);
+      // --- UserId: raíz o dentro de "user" ---
+      int userId = -1;
+      if (data['id'] != null) {
+        userId = int.tryParse('${data['id']}') ?? -1;            // <- raíz
+      } else if (data['user'] is Map && data['user']['id'] != null) {
+        userId = int.tryParse('${data['user']['id']}') ?? -1;    // <- anidado
       }
+      if (userId <= 0) {
+        throw Exception('userId no recibido del backend');
+      }
+      await _session.setUserId(userId);
 
-      // Rol
+      // --- Role (opcional) ---
       String role = 'ATHLETE';
-      if (data['roles'] is List && data['roles'].isNotEmpty) {
+      if (data['roles'] is List && (data['roles'] as List).isNotEmpty) {
         role = '${data['roles'][0]}';
-      } else if (data['user'] is Map && data['user']['roles'] is List && data['user']['roles'].isNotEmpty) {
+      } else if (data['user'] is Map &&
+          data['user']['roles'] is List &&
+          (data['user']['roles'] as List).isNotEmpty) {
         role = '${data['user']['roles'][0]}';
       }
       await _session.setRole(role);
@@ -97,13 +138,6 @@ class _LoginScreenState extends State<LoginScreen> {
     } finally {
       if (mounted) setState(() => _loading = false);
     }
-  }
-
-  @override
-  void dispose() {
-    _emailCtrl.dispose();
-    _passCtrl.dispose();
-    super.dispose();
   }
 
   @override
