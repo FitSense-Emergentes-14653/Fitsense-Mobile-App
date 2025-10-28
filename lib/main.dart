@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:fitsense/features/auth/presentation/login/login_screen.dart';
+import 'package:fitsense/infrastructure/services/session_service.dart';
 
-import 'features/auth/presentation/welcome/welcome_page.dart';
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await SessionService().init();
 
-void main() {
   runApp(const FitSenseApp());
 }
 
@@ -15,7 +18,7 @@ class FitSenseApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'FitSense',
       theme: ThemeData(fontFamily: 'Inter'),
-      home: const WelcomePage(),
+      home: const LoginScreen(),
     );
   }
 }
