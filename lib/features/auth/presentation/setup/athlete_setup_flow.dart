@@ -19,16 +19,29 @@ class _AthleteSetupFlowState extends State<AthleteSetupFlow> {
   int _step = 0;
 
   // Estado a recolectar
-  String? gender;                   // 'M' / 'F'
+  String? gender; // 'Masculino' / 'Femenino'
   int age = 28;
   double weight = 75;
-  bool useKg = true;                // KG/LB toggle
+  bool useKg = true;
   int heightCm = 165;
-  String? goal;                     // “Perder Peso”, etc.
+  String? goal; // “Perder Peso”, etc.
   String activityLevel = 'Intermedio';
-  final equipment = <String>[];     // libre
+  final equipment = <String>[];
 
-  // Nombre y teléfono (requeridos por modelo)
+  // Nuevos campos
+  String? environment; // "Casa" | "Gimnasio" | "Aire Libre" | "Sin preferencia"
+  int frecuency = 3; // 1..5 (veces por semana)
+
+  String freqLabel(int v) => switch (v) {
+    1 => 'Muy baja (1/sem.)',
+    2 => 'Baja (2/sem.)',
+    3 => 'Media (3–4/sem.)',
+    4 => 'Alta (5–6/sem.)',
+    5 => 'Intensa (7/sem.)',
+    _ => '',
+  };
+
+  // Nombre y teléfono
   final nameCtrl = TextEditingController();
   final phoneCtrl = TextEditingController();
 
@@ -36,9 +49,10 @@ class _AthleteSetupFlowState extends State<AthleteSetupFlow> {
   final _session = SessionService();
   bool _saving = false;
 
-  // helpers
+  // ---- Navegación ----
   void _next() {
-    if (_step < 7) {
+    // total páginas = 10 (0..9)
+    if (_step < 9) {
       setState(() => _step++);
       _pc.nextPage(duration: const Duration(milliseconds: 250), curve: Curves.easeOut);
     } else {
@@ -55,11 +69,11 @@ class _AthleteSetupFlowState extends State<AthleteSetupFlow> {
     }
   }
 
+  // ---- Guardar ----
   Future<void> _save() async {
-    // Validaciones mínimas
-    if (gender == null || goal == null || nameCtrl.text.trim().isEmpty) {
+    if (gender == null || goal == null || nameCtrl.text.trim().isEmpty || environment == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Completa género, meta y nombre.')),
+        const SnackBar(content: Text('Completa género, meta, nombre y entorno de entrenamiento.')),
       );
       return;
     }
@@ -83,6 +97,8 @@ class _AthleteSetupFlowState extends State<AthleteSetupFlow> {
         goal: goal!,
         activityLevel: activityLevel,
         equipment: equipment,
+        environment: environment!, // nuevo
+        frecuency: frecuency, // nuevo
       );
 
       await _repo.createAthlete(
@@ -96,6 +112,8 @@ class _AthleteSetupFlowState extends State<AthleteSetupFlow> {
         goal: model.goal,
         activityLevel: model.activityLevel,
         equipment: model.equipment,
+        environment: model.environment,
+        frecuency: model.frecuency,
       );
 
       if (!mounted) return;
@@ -127,7 +145,7 @@ class _AthleteSetupFlowState extends State<AthleteSetupFlow> {
   @override
   Widget build(BuildContext context) {
     const lilac = Color(0xFFC8B8FF);
-    const green = Color(0xFFCCF24D); // tono del mock para resaltados
+    const green = Color(0xFFCCF24D);
 
     Widget nextBtn(String text) => SizedBox(
       width: double.infinity,
@@ -225,18 +243,17 @@ class _AthleteSetupFlowState extends State<AthleteSetupFlow> {
                       ToggleButtons(
                         isSelected: [useKg, !useKg],
                         borderRadius: BorderRadius.circular(12),
-                        children: const [Padding(
-                            padding: EdgeInsets.symmetric(horizontal: 16),
-                            child: Text('KG')),
-                          Padding(
-                              padding: EdgeInsets.symmetric(horizontal: 16),
-                              child: Text('LB')),
+                        children: const [
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text('KG')),
+                          Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text('LB')),
                         ],
                         onPressed: (i) => setState(() => useKg = (i == 0)),
                       ),
                       const SizedBox(height: 12),
                       _SliderWithMarks(
-                        min: 30, max: 180, value: weight,
+                        min: 30,
+                        max: 180,
+                        value: weight,
                         onChanged: (v) => setState(() => weight = v),
                         accent: lilac,
                         label: '${weight.toStringAsFixed(0)} ${useKg ? 'Kg' : 'Lb'}',
@@ -251,7 +268,9 @@ class _AthleteSetupFlowState extends State<AthleteSetupFlow> {
                   title: '¿Cuál Es Tu Altura?',
                   subtitle: 'Ajusta tu altura en centímetros.',
                   child: _SliderWithMarks(
-                    min: 140, max: 200, value: heightCm.toDouble(),
+                    min: 140,
+                    max: 200,
+                    value: heightCm.toDouble(),
                     onChanged: (v) => setState(() => heightCm = v.round()),
                     accent: lilac,
                     label: '$heightCm cm',
@@ -267,7 +286,7 @@ class _AthleteSetupFlowState extends State<AthleteSetupFlow> {
                     options: const [
                       'Perder Peso',
                       'Ganar Peso',
-                      'Aumentar de Masa',
+                      'Aumento de masa muscular',
                       'Moldear El Cuerpo',
                       'Otros',
                     ],
@@ -290,7 +309,38 @@ class _AthleteSetupFlowState extends State<AthleteSetupFlow> {
                   bottom: nextBtn('Siguiente'),
                 ),
 
-                // 7) Datos de contacto (Nombre + Teléfono) + Equipamiento opcional
+                // 7) Entorno de entrenamiento
+                _CardScaffold(
+                  title: '¿Dónde entrenas normalmente?',
+                  subtitle: 'Selecciona tu entorno habitual.',
+                  child: _SingleChoiceChipsNullable(
+                    options: const ['Casa', 'Gimnasio', 'Aire Libre', 'Sin preferencia'],
+                    value: environment,
+                    onChanged: (v) => setState(() => environment = v),
+                    accent: lilac,
+                  ),
+                  bottom: nextBtn('Siguiente'),
+                ),
+
+                // 8) Frecuencia (veces/semana)
+                _CardScaffold(
+                  title: '¿Con qué frecuencia entrenas?',
+                  subtitle: 'Veces por semana',
+                  child: Column(
+                    children: [
+                      Text('$frecuency', style: const TextStyle(fontSize: 44, fontWeight: FontWeight.w800)),
+                      Slider(
+                        value: frecuency.toDouble(),
+                        min: 1, max: 5, divisions: 4,
+                        label: freqLabel(frecuency),
+                        onChanged: (v) => setState(() => frecuency = v.round()),
+                      )
+                    ],
+                  ),
+                  bottom: nextBtn('Siguiente'),
+                ),
+
+                // 9) Datos de contacto + equipo (opcional)
                 _CardScaffold(
                   title: 'Datos de Contacto',
                   subtitle: 'Necesitamos tu nombre y teléfono.',
@@ -298,24 +348,35 @@ class _AthleteSetupFlowState extends State<AthleteSetupFlow> {
                     children: [
                       _TextBox(hint: 'Nombre Completo', controller: nameCtrl),
                       const SizedBox(height: 12),
-                      _TextBox(hint: 'Teléfono (opcional)', controller: phoneCtrl, keyboardType: TextInputType.phone),
+                      _TextBox(
+                        hint: 'Teléfono (opcional)',
+                        controller: phoneCtrl,
+                        keyboardType: TextInputType.phone,
+                      ),
                       const SizedBox(height: 16),
                       Align(
                         alignment: Alignment.centerLeft,
-                        child: Text('Equipamiento (opcional)', style: TextStyle(color: Colors.white.withOpacity(.9), fontWeight: FontWeight.w600)),
+                        child: Text(
+                          'Equipamiento (opcional)',
+                          style: TextStyle(color: Colors.white.withOpacity(.9), fontWeight: FontWeight.w600),
+                        ),
                       ),
                       const SizedBox(height: 8),
                       Wrap(
                         spacing: 8,
                         runSpacing: 8,
                         children: [
-                          for (final e in ['Mancuernas','Banda elástica','Colchoneta','Cuerda'])
+                          for (final e in ['Mancuernas', 'Banda elástica', 'Colchoneta', 'Cuerda'])
                             FilterChip(
                               selected: equipment.contains(e),
                               label: Text(e),
-                              onSelected: (s){
+                              onSelected: (s) {
                                 setState(() {
-                                  if (s) equipment.add(e); else equipment.remove(e);
+                                  if (s) {
+                                    equipment.add(e);
+                                  } else {
+                                    equipment.remove(e);
+                                  }
                                 });
                               },
                             ),
@@ -334,7 +395,7 @@ class _AthleteSetupFlowState extends State<AthleteSetupFlow> {
   }
 }
 
-// -------------------- UI helpers --------------------
+/* ----------------------- UI helpers ----------------------- */
 
 class _IntroStep extends StatelessWidget {
   final String heroAsset;
@@ -352,7 +413,7 @@ class _IntroStep extends StatelessWidget {
           child: ClipRRect(
             borderRadius: BorderRadius.circular(12),
             child: AspectRatio(
-              aspectRatio: 9/16,
+              aspectRatio: 9 / 16,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
@@ -366,10 +427,7 @@ class _IntroStep extends StatelessWidget {
                       child: const Text(
                         'La Constancia Es La Clave Del Progreso.\n¡No Te Rindas!',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 16,
-                        ),
+                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
                       ),
                     ),
                   ),
@@ -389,7 +447,8 @@ class _IntroStep extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         SizedBox(
-          width: 180, height: 46,
+          width: 180,
+          height: 46,
           child: ElevatedButton(
             onPressed: onNext,
             style: ElevatedButton.styleFrom(
@@ -429,22 +488,17 @@ class _CardScaffold extends StatelessWidget {
       child: Column(
         children: [
           const SizedBox(height: 6),
-          Text(title,
-              style: const TextStyle(
-                  color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800)),
+          Text(title, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800)),
           const SizedBox(height: 8),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(subtitle,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.white70)),
+            child: Text(subtitle, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white70)),
           ),
           const SizedBox(height: 16),
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-                color: lilac, borderRadius: BorderRadius.circular(8)),
+            decoration: BoxDecoration(color: lilac, borderRadius: BorderRadius.circular(8)),
             child: child,
           ),
           const Spacer(),
@@ -476,9 +530,11 @@ class _GenderOption extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 130, height: 160,
+        width: 130,
+        height: 160,
         decoration: BoxDecoration(
-          color: Colors.white, shape: BoxShape.circle,
+          color: Colors.white,
+          shape: BoxShape.circle,
           boxShadow: [BoxShadow(color: Colors.black.withOpacity(.2), blurRadius: 8)],
         ),
         child: Column(
@@ -518,7 +574,7 @@ class _NumberPicker extends StatelessWidget {
           value: value.toDouble(),
           min: min.toDouble(),
           max: max.toDouble(),
-          divisions: (max-min),
+          divisions: (max - min),
           activeColor: Colors.black87,
           inactiveColor: accent.withOpacity(.6),
           onChanged: (v) => onChanged(v.round()),
@@ -590,6 +646,36 @@ class _SingleChoice extends StatelessWidget {
   }
 }
 
+// chips que aceptan valor nullable
+class _SingleChoiceChipsNullable extends StatelessWidget {
+  final List<String> options;
+  final String? value;
+  final ValueChanged<String> onChanged;
+  final Color accent;
+  const _SingleChoiceChipsNullable({
+    required this.options,
+    required this.value,
+    required this.onChanged,
+    required this.accent,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 10,
+      children: [
+        for (final o in options)
+          ChoiceChip(
+            label: Text(o),
+            selected: value == o,
+            selectedColor: accent,
+            onSelected: (_) => onChanged(o),
+          ),
+      ],
+    );
+  }
+}
+
 class _SingleChoiceChips extends StatelessWidget {
   final List<String> options;
   final String value;
@@ -634,11 +720,11 @@ class _TextBox extends StatelessWidget {
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
-        decoration: InputDecoration(
-          hintText: hint,
+        decoration: const InputDecoration(
+          hintText: '',
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 14),
-        ),
+          contentPadding: EdgeInsets.symmetric(horizontal: 14),
+        ).copyWith(hintText: hint),
       ),
     );
   }

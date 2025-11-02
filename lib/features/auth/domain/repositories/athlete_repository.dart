@@ -9,7 +9,6 @@ class AthleteRepository {
   AthleteRepository(this.remoteDataSource);
 
   // ================= GET =================
-
   Future<AthleteModel> getById(int athleteId) async {
     final token = _session.getToken();
     return remoteDataSource.getAthleteById(
@@ -24,7 +23,6 @@ class AthleteRepository {
   }
 
   // ================= POST =================
-
   Future<AthleteModel> createAthlete({
     required int userId,
     required String fullname,
@@ -36,6 +34,9 @@ class AthleteRepository {
     required String goal,
     required String activityLevel,
     required List<String> equipment,
+    // 🔹 nuevos
+    required String environment,
+    required int frecuency,
   }) async {
     final token = _session.getToken();
     final body = {
@@ -49,18 +50,17 @@ class AthleteRepository {
       'goal': goal,
       'activityLevel': activityLevel,
       'equipment': equipment,
+      'environment': environment,
+      'frecuency': frecuency,
     };
-
     return remoteDataSource.createAthlete(token: token, body: body);
   }
 
   // ================= PUT =================
-
-  Future<AthleteModel> updateAthlete(
-      int athleteId, AthleteModel updated) async {
+  Future<AthleteModel> updateAthlete(int athleteId, AthleteModel updated) async {
     final token = _session.getToken();
     final body = updated.toJson();
-    body.remove('id'); // el ID no se actualiza en el cuerpo
+    body.remove('id');
     return remoteDataSource.updateAthlete(
       token: token,
       athleteId: athleteId,
@@ -69,23 +69,14 @@ class AthleteRepository {
   }
 
   // ================= DELETE =================
-
   Future<void> deleteAthlete(int athleteId) async {
     final token = _session.getToken();
-    await remoteDataSource.deleteAthlete(
-      token: token,
-      athleteId: athleteId,
-    );
+    await remoteDataSource.deleteAthlete(token: token, athleteId: athleteId);
   }
 
-  // Buscar el atleta por userId (fallback: GET /athletes y filtrar)
+  // Buscar por userId (fallback)
   Future<AthleteModel?> findByUserIdOrNull(int userId) async {
     final token = _session.getToken();
-
-    // Si tu API soporta query por userId, usa eso:
-    // return await remoteDataSource.findAthleteByUserId(token: token, userId: userId);
-
-    // Fallback robusto: traer lista y filtrar
     final list = await remoteDataSource.getAllAthletes(token: token);
     try {
       return list.firstWhere((a) => a.userId == userId);
