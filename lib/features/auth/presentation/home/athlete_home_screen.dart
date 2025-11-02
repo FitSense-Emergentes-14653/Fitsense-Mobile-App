@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:fitsense/core/widgets/drawer/background.dart';
 import 'package:fitsense/core/widgets/drawer/user_navbar.dart';
 
+import 'package:fitsense/features/auth/presentation/settings/athlete_settings_screen.dart';
+
 class AthleteHomeScreen extends StatefulWidget {
   const AthleteHomeScreen({super.key});
 
@@ -12,13 +14,49 @@ class AthleteHomeScreen extends StatefulWidget {
 class _AthleteHomeScreenState extends State<AthleteHomeScreen> {
   int _index = 0;
 
-  // Reemplazar por las vistas verdaderas
   final List<Widget> _screens = const [
-    _HomeTab(),
-    _ChatTab(),
-    _StarsTab(),
-    _ConfigTab(),
+    _HomeTab()
   ];
+
+  void _onTapNavbar(int i) {
+    // Navegación al chat
+    if (i == 1) {
+      Navigator.of(context).push(
+        PageRouteBuilder(
+          transitionDuration: const Duration(milliseconds: 300),
+          pageBuilder: (_, __, ___) => const AthleteSettingsScreen(),
+          transitionsBuilder: (_, a, __, child) =>
+              FadeTransition(opacity: a, child: child),
+        ),
+      );
+      return;
+    }
+    // Navegación a los favoritos
+    if (i == 2) {
+      Navigator.of(context).push(
+        PageRouteBuilder(
+          transitionDuration: const Duration(milliseconds: 300),
+          pageBuilder: (_, __, ___) => const AthleteSettingsScreen(),
+          transitionsBuilder: (_, a, __, child) =>
+              FadeTransition(opacity: a, child: child),
+        ),
+      );
+      return;
+    }
+    // Navegación a la configuración
+    if (i == 3) {
+      Navigator.of(context).push(
+        PageRouteBuilder(
+          transitionDuration: const Duration(milliseconds: 300),
+          pageBuilder: (_, __, ___) => const AthleteSettingsScreen(),
+          transitionsBuilder: (_, a, __, child) =>
+              FadeTransition(opacity: a, child: child),
+        ),
+      );
+      return;
+    }
+    setState(() => _index = i);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +79,7 @@ class _AthleteHomeScreenState extends State<AthleteHomeScreen> {
             bottom: 12,
             child: UserNavbar(
               selectedIndex: _index,
-              onTap: (i) => setState(() => _index = i),
+              onTap: _onTapNavbar,
             ),
           ),
         ],
@@ -71,51 +109,6 @@ class _HomeTab extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ChatTab extends StatelessWidget {
-  const _ChatTab();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      key: ValueKey('chat'),
-      child: Text(
-        'Chat',
-        style: TextStyle(color: Colors.white, fontSize: 20),
-      ),
-    );
-  }
-}
-
-class _StarsTab extends StatelessWidget {
-  const _StarsTab();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      key: ValueKey('stars'),
-      child: Text(
-        'Stars / Reviews',
-        style: TextStyle(color: Colors.white, fontSize: 20),
-      ),
-    );
-  }
-}
-
-class _ConfigTab extends StatelessWidget {
-  const _ConfigTab();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      key: ValueKey('config'),
-      child: Text(
-        'Configuración',
-        style: TextStyle(color: Colors.white, fontSize: 20),
       ),
     );
   }
