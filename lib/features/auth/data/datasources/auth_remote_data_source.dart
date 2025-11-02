@@ -219,5 +219,33 @@ class AuthRemoteDataSource extends BaseService {
       rethrow;
     }
   }
+
+
+  // ---------- RESET DE CONTRASEÑA ----------
+  Future<bool> resetPassword({
+    required String email,
+    required String newPassword,
+  }) async {
+    final url = '$baseUrl/authentication/reset-password';
+    final body = {'email': email, 'newPassword': newPassword};
+
+    print('🛠️ DEBUG AUTH: resetPassword -> $url');
+    print('📦 DEBUG AUTH: body: ${jsonEncode(body)}');
+
+    try {
+      final res = await http
+          .put(Uri.parse(url), headers: _headers(), body: jsonEncode(body))
+          .timeout(const Duration(seconds: 20));
+
+      print('📡 DEBUG AUTH: resetPassword status: ${res.statusCode}');
+      print('📄 DEBUG AUTH: Body: ${res.body}');
+
+      if (res.statusCode == 200) return true;
+      throw Exception('HTTP ${res.statusCode}: ${res.body}');
+    } catch (e) {
+      print('❌ DEBUG AUTH: resetPassword error: $e');
+      rethrow;
+    }
+  }
 }
 
