@@ -36,6 +36,13 @@ class AuthRepository {
     );
   }
 
+  // ---------- reset password ----------
+  Future<bool> resetPassword({
+    required String email,
+    required String newPassword,
+  }) =>
+      remoteDataSource.resetPassword(email: email, newPassword: newPassword);
+
   // ---------------------------
   // USER & PROFILE
   // ---------------------------

@@ -19,6 +19,9 @@ import '../../../../infrastructure/services/session_service.dart';
 import 'package:fitsense/features/auth/presentation/home/athlete_home_screen.dart';
 import 'package:fitsense/features/auth/presentation/register/sign_up_screen.dart';
 
+// Reset Password
+import 'package:fitsense/features/auth/presentation/reset-password/set_password_screen.dart';
+
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
   @override
@@ -259,7 +262,18 @@ class _LoginScreenState extends State<LoginScreen> {
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
-                        onPressed: () {}, // TODO: recuperar contraseña
+                        onPressed: () {
+                          final email = _emailCtrl.text.trim();
+                          if (email.isEmpty || !email.contains('@')) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Ingresa un email válido antes de continuar.')),
+                            );
+                            return;
+                          }
+                          Navigator.of(context).push(
+                            MaterialPageRoute(builder: (_) => SetPasswordScreen(email: email)),
+                          );
+                        },
                         child: const Text(
                           '¿Olvidaste tu contraseña?',
                           style: TextStyle(
