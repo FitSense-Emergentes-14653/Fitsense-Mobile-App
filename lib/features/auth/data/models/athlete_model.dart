@@ -10,6 +10,8 @@ class AthleteModel {
   final String goal;
   final String activityLevel;
   final List<String> equipment;
+  final String environment;
+  final int frecuency;
 
   AthleteModel({
     required this.id,
@@ -23,12 +25,22 @@ class AthleteModel {
     required this.goal,
     required this.activityLevel,
     required this.equipment,
+    required this.environment,
+    required this.frecuency,
   });
 
   // ---- fromJson ----
   factory AthleteModel.fromJson(Map<String, dynamic> json) {
     final id = (json['id'] ?? json['athleteId'] ?? 0) as num;
     final userId = (json['userId'] ?? 0) as num;
+
+    // soporta 'frequency' o 'frecuency' (por si cambia)
+    int _readFrecuency(dynamic v) {
+      if (v is num) return v.toInt();
+      final s = v?.toString() ?? '0';
+      return int.tryParse(s) ?? 0;
+    }
+
     return AthleteModel(
       id: id.toInt(),
       userId: userId.toInt(),
@@ -47,6 +59,8 @@ class AthleteModel {
       equipment: (json['equipment'] is List)
           ? List<String>.from(json['equipment'])
           : [],
+      environment: (json['environment'] ?? '').toString(),
+      frecuency: _readFrecuency(json['frecuency'] ?? json['frequency']),
     );
   }
 
@@ -64,6 +78,8 @@ class AthleteModel {
       'goal': goal,
       'activityLevel': activityLevel,
       'equipment': equipment,
+      'environment': environment,
+      'frecuency': frecuency,
     };
   }
 
@@ -79,6 +95,8 @@ class AthleteModel {
     String? goal,
     String? activityLevel,
     List<String>? equipment,
+    String? environment,
+    int? frecuency,
   }) {
     return AthleteModel(
       id: id ?? this.id,
@@ -92,6 +110,8 @@ class AthleteModel {
       goal: goal ?? this.goal,
       activityLevel: activityLevel ?? this.activityLevel,
       equipment: equipment ?? this.equipment,
+      environment: environment ?? this.environment,
+      frecuency: frecuency ?? this.frecuency,
     );
   }
 }

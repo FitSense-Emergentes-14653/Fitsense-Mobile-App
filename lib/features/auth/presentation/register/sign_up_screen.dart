@@ -120,20 +120,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const _Label('Nombre Completo'),
-                    const SizedBox(height: 8),
-                    _Input(
-                      controller: _nameCtrl,
-                      hint: 'lucas perez',
-                      validator: (v) =>
-                      (v == null || v.trim().isEmpty) ? 'Ingresa tu nombre' : null,
-                    ),
                     const SizedBox(height: 16),
-                    const _Label('Email o Número Telefónico'),
+                    const _Label('Email'),
                     const SizedBox(height: 8),
                     _Input(
                       controller: _emailOrPhoneCtrl,
-                      hint: 'example@example.com',
+                      hint: 'tucorreo@gmail.com',
                       keyboardType: TextInputType.emailAddress,
                       validator: (v) {
                         final t = v?.trim() ?? '';
