@@ -13,6 +13,9 @@ import 'package:fitsense/features/auth/domain/repositories/athlete_repository.da
 // Setup por si falta el perfil
 import 'package:fitsense/features/auth/presentation/setup/athlete_setup_flow.dart';
 
+// Edit flow
+import 'package:fitsense/features/auth/presentation/settings/athlete_edit_flow.dart';
+
 class AthleteSettingsScreen extends StatefulWidget {
   const AthleteSettingsScreen({super.key});
 
@@ -42,6 +45,7 @@ class _AthleteSettingsScreenState extends State<AthleteSettingsScreen> {
   }
 
   String _freqLabel(int n) {
+    // Mapeo 1..7 por compatibilidad, mostrando 1..5 con etiquetas friendly
     if (n <= 1) return 'Muy ocasional';
     if (n == 2) return 'Ligero (2/sem)';
     if (n == 3) return 'Moderado (3/sem)';
@@ -69,6 +73,33 @@ class _AthleteSettingsScreenState extends State<AthleteSettingsScreen> {
       ),
           (_) => false,
     );
+  }
+
+  Future<void> _goToEdit(AthleteModel athlete) async {
+    final updated = await Navigator.of(context).push<AthleteModel>(
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 350),
+        pageBuilder: (_, __, ___) => AthleteEditFlow(athlete: athlete),
+        transitionsBuilder: (_, a, __, c) => FadeTransition(opacity: a, child: c),
+      ),
+    );
+
+    // Si el flujo devolvió un Athlete actualizado, refrescamos UI
+    if (!mounted) return;
+    if (updated != null) {
+      setState(() {
+        // refresca sin re-llamar API
+        _future = Future.value(updated);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Perfil actualizado.')),
+      );
+    } else {
+      // opcional: recargar por si cambió algo fuera
+      setState(() {
+        _future = _load();
+      });
+    }
   }
 
   @override
@@ -125,8 +156,7 @@ class _AthleteSettingsScreenState extends State<AthleteSettingsScreen> {
                     if (athlete == null) {
                       return _EmptyCard(
                         title: 'Aún no completas tu perfil',
-                        subtitle:
-                        'Cuéntanos tus datos para personalizar tu experiencia.',
+                        subtitle: 'Cuéntanos tus datos para personalizar tu experiencia.',
                         actionText: 'Completar ahora',
                         onTap: () {
                           Navigator.of(context).push(
@@ -144,7 +174,7 @@ class _AthleteSettingsScreenState extends State<AthleteSettingsScreen> {
                     return SingleChildScrollView(
                       child: Column(
                         children: [
-                          // Header card
+                          // Header card + botón Editar
                           Container(
                             width: double.infinity,
                             padding: const EdgeInsets.all(16),
@@ -171,20 +201,40 @@ class _AthleteSettingsScreenState extends State<AthleteSettingsScreen> {
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(athlete.fullname,
-                                          style: const TextStyle(
-                                              fontSize: 18,
-                                              fontWeight: FontWeight.w800,
-                                              color: Colors.black)),
+                                      Text(
+                                        athlete.fullname,
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.w800,
+                                          color: Colors.black,
+                                        ),
+                                      ),
                                       const SizedBox(height: 4),
                                       Text(
                                         athlete.phone.isNotEmpty ? athlete.phone : 'Sin teléfono',
                                         style: const TextStyle(
-                                            color: Colors.black87,
-                                            fontWeight: FontWeight.w600),
+                                          color: Colors.black87,
+                                          fontWeight: FontWeight.w600,
+                                        ),
                                       ),
                                     ],
                                   ),
+                                ),
+                                const SizedBox(width: 8),
+                                ElevatedButton.icon(
+                                  onPressed: () => _goToEdit(athlete),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF1E1E1E),
+                                    foregroundColor: Colors.white,
+                                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(12),
+                                      side: const BorderSide(color: Colors.white24),
+                                    ),
+                                    elevation: 0,
+                                  ),
+                                  icon: const Icon(Icons.edit_outlined, size: 18),
+                                  label: const Text('Editar', style: TextStyle(fontWeight: FontWeight.w700)),
                                 ),
                               ],
                             ),
@@ -197,8 +247,16 @@ class _AthleteSettingsScreenState extends State<AthleteSettingsScreen> {
                             children: [
                               _InfoRow(icon: Icons.person_outline, label: 'Género', value: athlete.gender),
                               _InfoRow(icon: Icons.cake_outlined, label: 'Edad', value: '${athlete.age}'),
-                              _InfoRow(icon: Icons.monitor_weight_outlined, label: 'Peso', value: '${athlete.weight.toStringAsFixed(1)} kg'),
-                              _InfoRow(icon: Icons.height_outlined, label: 'Altura', value: '${athlete.height.toStringAsFixed(0)} cm'),
+                              _InfoRow(
+                                icon: Icons.monitor_weight_outlined,
+                                label: 'Peso',
+                                value: '${athlete.weight.toStringAsFixed(1)} kg',
+                              ),
+                              _InfoRow(
+                                icon: Icons.height_outlined,
+                                label: 'Altura',
+                                value: '${athlete.height.toStringAsFixed(0)} cm',
+                              ),
                             ],
                           ),
 
@@ -210,8 +268,11 @@ class _AthleteSettingsScreenState extends State<AthleteSettingsScreen> {
                               _InfoRow(icon: Icons.flag_outlined, label: 'Meta', value: athlete.goal),
                               _InfoRow(icon: Icons.bolt_outlined, label: 'Nivel', value: athlete.activityLevel),
                               _InfoRow(icon: Icons.place_outlined, label: 'Entorno', value: athlete.environment),
-                              _InfoRow(icon: Icons.schedule_outlined, label: 'Frecuencia',
-                                  value: '${athlete.frecuency} /sem • ${_freqLabel(athlete.frecuency)}'),
+                              _InfoRow(
+                                icon: Icons.schedule_outlined,
+                                label: 'Frecuencia',
+                                value: '${athlete.frecuency} /sem • ${_freqLabel(athlete.frecuency)}',
+                              ),
                             ],
                           ),
 
@@ -223,10 +284,10 @@ class _AthleteSettingsScreenState extends State<AthleteSettingsScreen> {
                               if (athlete.equipment.isEmpty)
                                 const Padding(
                                   padding: EdgeInsets.symmetric(vertical: 8),
-                                  child: Text('Sin equipamiento registrado',
-                                      style: TextStyle(
-                                          color: Colors.black87,
-                                          fontWeight: FontWeight.w600)),
+                                  child: Text(
+                                    'Sin equipamiento registrado',
+                                    style: TextStyle(color: Colors.black87, fontWeight: FontWeight.w600),
+                                  ),
                                 )
                               else
                                 Wrap(
@@ -271,9 +332,10 @@ class _InfoCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title,
-              style: const TextStyle(
-                  color: Colors.black, fontWeight: FontWeight.w800, fontSize: 14)),
+          Text(
+            title,
+            style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w800, fontSize: 14),
+          ),
           const SizedBox(height: 8),
           ...children,
         ],
@@ -297,11 +359,12 @@ class _InfoRow extends StatelessWidget {
           Icon(icon, color: Colors.black87, size: 20),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(label,
-                style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w700)),
+            child: Text(
+              label,
+              style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w700),
+            ),
           ),
-          Text(value,
-              style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w600)),
+          Text(value, style: const TextStyle(color: Colors.black87, fontWeight: FontWeight.w600)),
         ],
       ),
     );
@@ -321,8 +384,10 @@ class _ChipTag extends StatelessWidget {
         borderRadius: BorderRadius.circular(22),
         border: Border.all(color: Colors.white24),
       ),
-      child: Text(text,
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600)),
+      child: Text(
+        text,
+        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+      ),
     );
   }
 }
@@ -332,7 +397,12 @@ class _EmptyCard extends StatelessWidget {
   final String subtitle;
   final String actionText;
   final VoidCallback onTap;
-  const _EmptyCard({required this.title, required this.subtitle, required this.actionText, required this.onTap});
+  const _EmptyCard({
+    required this.title,
+    required this.subtitle,
+    required this.actionText,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -344,13 +414,12 @@ class _EmptyCard extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(title,
-                style: const TextStyle(
-                    color: Colors.black, fontWeight: FontWeight.w800, fontSize: 16)),
+            Text(
+              title,
+              style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w800, fontSize: 16),
+            ),
             const SizedBox(height: 6),
-            Text(subtitle,
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: Colors.black87)),
+            Text(subtitle, textAlign: TextAlign.center, style: const TextStyle(color: Colors.black87)),
             const SizedBox(height: 12),
             ElevatedButton(
               onPressed: onTap,
