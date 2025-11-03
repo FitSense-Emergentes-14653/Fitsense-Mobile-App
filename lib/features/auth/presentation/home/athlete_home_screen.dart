@@ -4,6 +4,8 @@ import 'package:fitsense/core/widgets/drawer/user_navbar.dart';
 
 import 'package:fitsense/features/auth/presentation/settings/athlete_settings_screen.dart';
 
+import '../chatbot/athlete_chatbot_screen.dart';
+
 class AthleteHomeScreen extends StatefulWidget {
   const AthleteHomeScreen({super.key});
 
@@ -17,7 +19,16 @@ class _AthleteHomeScreenState extends State<AthleteHomeScreen> {
   final List<Widget> _screens = const [
     _HomeTab()
   ];
-
+  void _openChatbot() {
+    Navigator.of(context).push(
+      PageRouteBuilder(
+        transitionDuration: const Duration(milliseconds: 300),
+        pageBuilder: (_, __, ___) => const AthleteChatbotScreen(),
+        transitionsBuilder: (_, a, __, child) =>
+            FadeTransition(opacity: a, child: child),
+      ),
+    );
+  }
   void _onTapNavbar(int i) {
     // Navegación al chat
     if (i == 1) {
@@ -69,6 +80,26 @@ class _AthleteHomeScreenState extends State<AthleteHomeScreen> {
             child: AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
               child: _screens[_index],
+            ),
+          ),
+          SafeArea(
+            minimum: const EdgeInsets.only(
+              right: 20,
+              bottom: 12 + UserNavbar.kHeight,
+            ),
+            child: Align(
+              alignment: Alignment.bottomRight,
+              child: FloatingActionButton.extended(
+                heroTag: 'athlete_chatbot',
+                onPressed: _openChatbot,
+                backgroundColor: const Color(0xFF8A5CF6),
+                foregroundColor: Colors.white,
+                icon: const Icon(Icons.chat_bubble_outline_rounded),
+                label: const Text(
+                  'Chat',
+                  style: TextStyle(fontWeight: FontWeight.w700),
+                ),
+              ),
             ),
           ),
 

@@ -11,7 +11,7 @@ class UserNavbar extends StatelessWidget {
   });
 
   static const _purple = Color(0xFF8A5CF6);
-
+  static const double kHeight = 120;
   @override
   Widget build(BuildContext context) {
     return SafeArea(
