@@ -9,7 +9,6 @@ class AthleteChatbotScreen extends StatefulWidget {
 }
 
 class _AthleteChatbotScreenState extends State<AthleteChatbotScreen> {
-  final _controller = TextEditingController();
   final _scrollController = ScrollController();
 
   static const _routinePlan = """✨ Tu plan mensual
@@ -54,17 +53,8 @@ class _AthleteChatbotScreenState extends State<AthleteChatbotScreen> {
 
   @override
   void dispose() {
-    _controller.dispose();
     _scrollController.dispose();
     super.dispose();
-  }
-
-  void _sendMessage() {
-    final text = _controller.text.trim();
-    if (text.isEmpty) return;
-
-    _controller.clear();
-    _dispatchMessage(text);
   }
 
   void _dispatchMessage(String text) {
@@ -227,66 +217,23 @@ class _AthleteChatbotScreenState extends State<AthleteChatbotScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  if (_quickPrompts.isNotEmpty) ...[
-                    SizedBox(
-                      height: 44,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        itemBuilder: (context, index) {
-                          final prompt = _quickPrompts[index];
-                          return ActionChip(
-                            label: Text(prompt.label),
-                            backgroundColor: Colors.white.withOpacity(0.08),
-                            labelStyle: const TextStyle(color: Colors.white),
-                            side: const BorderSide(color: Colors.white24),
-                            onPressed: () => _dispatchMessage(prompt.message),
-                          );
-                        },
-                        separatorBuilder: (_, __) => const SizedBox(width: 12),
-                        itemCount: _quickPrompts.length,
-                      ),
+                  SizedBox(
+                    height: 44,
+                    child: ListView.separated(
+                      scrollDirection: Axis.horizontal,
+                      itemBuilder: (context, index) {
+                        final prompt = _quickPrompts[index];
+                        return ActionChip(
+                          label: Text(prompt.label),
+                          backgroundColor: Colors.white.withOpacity(0.08),
+                          labelStyle: const TextStyle(color: Colors.white),
+                          side: const BorderSide(color: Colors.white24),
+                          onPressed: () => _dispatchMessage(prompt.message),
+                        );
+                      },
+                      separatorBuilder: (_, __) => const SizedBox(width: 12),
+                      itemCount: _quickPrompts.length,
                     ),
-                    const SizedBox(height: 12),
-                  ],
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _controller,
-                          style: const TextStyle(color: Colors.white),
-                          minLines: 1,
-                          maxLines: 4,
-                          decoration: InputDecoration(
-                            hintText: 'Escribe tu mensaje...',
-                            hintStyle:
-                            TextStyle(color: Colors.white.withOpacity(0.6)),
-                            filled: true,
-                            fillColor: Colors.white.withOpacity(0.06),
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(18),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
-                          onSubmitted: (_) => _sendMessage(),
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      ElevatedButton(
-                        onPressed: _sendMessage,
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.all(16),
-                          backgroundColor: const Color(0xFF8A5CF6),
-                          foregroundColor: Colors.white,
-                          shape: const CircleBorder(),
-                          elevation: 0,
-                        ),
-                        child: const Icon(Icons.send_rounded),
-                      ),
-                    ],
                   ),
                 ],
               ),
