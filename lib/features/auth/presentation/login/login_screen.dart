@@ -32,7 +32,7 @@ class _LoginScreenState extends State<LoginScreen> {
   // --- UI/State ---
   final _formKey = GlobalKey<FormState>();
   final _emailCtrl = TextEditingController();
-  final _passCtrl  = TextEditingController(); // <- FALTABA
+  final _passCtrl  = TextEditingController();
   bool _obscure = true;
   bool _loading = false;
 
@@ -47,22 +47,25 @@ class _LoginScreenState extends State<LoginScreen> {
     super.dispose();
   }
 
-  Future<void> _goByRole(String role) async {
+  // >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+  // Cambiado para RECIBIR userId y pasarlo al Home / Setup
+  Future<void> _goByRole(String role, int userId) async {
     if (!mounted) return;
     final upper = role.toUpperCase();
 
     if (upper == 'ATHLETE') {
       // Gate: si no existe Athlete -> Setup Flow
       final repo = AthleteRepository(AthleteRemoteDataSource());
-      final userId = _session.getUserId();
-      debugPrint('⚙️ USER ID desde SessionService: $userId');
+
       if (userId <= 0) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error: userId no válido en sesión.')),
+          const SnackBar(content: Text('Error: userId no válido.')),
         );
         return;
       }
-      final list = await repo.getAll(); // fallback robusto
+
+      // Ideal: tener endpoint /athletes/me; por ahora fallback:
+      final list = await repo.getAll();
       final exists = list.any((a) => a.userId == userId);
 
       if (!mounted) return;
@@ -79,16 +82,16 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     }
 
-    // Home por defecto
-    Navigator.of(context).pushReplacement(
+    Navigator.of(context).pushAndRemoveUntil(
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 500),
-        pageBuilder: (_, __, ___) => const AthleteHomeScreen(),
-        transitionsBuilder: (_, a, __, child) =>
-            FadeTransition(opacity: a, child: child),
+        pageBuilder: (_, __, ___) => AthleteHomeScreen(userId: userId),
+        transitionsBuilder: (_, a, __, child) => FadeTransition(opacity: a, child: child),
       ),
+          (_) => false,
     );
   }
+  // <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
 
   Future<void> _onLogin() async {
     if (!_formKey.currentState!.validate()) return;
@@ -104,24 +107,21 @@ class _LoginScreenState extends State<LoginScreen> {
       final data = await _auth.signInUser(email: email, password: pass);
       if (data == null) throw Exception('No se pudo iniciar sesión');
 
-      // --- Token ---
       final token = (data['token'] ?? '').toString();
       if (token.isEmpty) throw Exception('Token no recibido');
       await _session.setToken(token);
 
-      // --- UserId: raíz o dentro de "user" ---
       int userId = -1;
       if (data['id'] != null) {
-        userId = int.tryParse('${data['id']}') ?? -1;            // <- raíz
+        userId = int.tryParse('${data['id']}') ?? -1;            // raíz
       } else if (data['user'] is Map && data['user']['id'] != null) {
-        userId = int.tryParse('${data['user']['id']}') ?? -1;    // <- anidado
+        userId = int.tryParse('${data['user']['id']}') ?? -1;    // anidado
       }
       if (userId <= 0) {
         throw Exception('userId no recibido del backend');
       }
       await _session.setUserId(userId);
 
-      // --- Role (opcional) ---
       String role = 'ATHLETE';
       if (data['roles'] is List && (data['roles'] as List).isNotEmpty) {
         role = '${data['roles'][0]}';
@@ -132,7 +132,7 @@ class _LoginScreenState extends State<LoginScreen> {
       }
       await _session.setRole(role);
 
-      await _goByRole(role);
+      await _goByRole(role, userId);
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
@@ -355,7 +355,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: const Text(
                       'Regístrate',
                       style: TextStyle(
-                        color: purple,
+                        color: Color(0xFF8A5CF6),
                         fontWeight: FontWeight.w700,
                         fontSize: 13,
                       ),

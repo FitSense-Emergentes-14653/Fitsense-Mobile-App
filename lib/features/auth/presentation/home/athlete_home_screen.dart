@@ -3,11 +3,11 @@ import 'package:fitsense/core/widgets/drawer/background.dart';
 import 'package:fitsense/core/widgets/drawer/user_navbar.dart';
 
 import 'package:fitsense/features/auth/presentation/settings/athlete_settings_screen.dart';
-
 import '../chatbot/athlete_chatbot_screen.dart';
 
 class AthleteHomeScreen extends StatefulWidget {
-  const AthleteHomeScreen({super.key});
+  final int userId;
+  const AthleteHomeScreen({super.key, required this.userId});
 
   @override
   State<AthleteHomeScreen> createState() => _AthleteHomeScreenState();
@@ -19,47 +19,46 @@ class _AthleteHomeScreenState extends State<AthleteHomeScreen> {
   final List<Widget> _screens = const [
     _HomeTab()
   ];
+
   void _openChatbot() {
     Navigator.of(context).push(
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 300),
-        pageBuilder: (_, __, ___) => const AthleteChatbotScreen(),
+        pageBuilder: (_, __, ___) => AthleteChatbotScreen(userId: widget.userId),
         transitionsBuilder: (_, a, __, child) =>
             FadeTransition(opacity: a, child: child),
       ),
     );
   }
+
   void _onTapNavbar(int i) {
-    // Navegación al chat
     if (i == 1) {
       Navigator.of(context).push(
         PageRouteBuilder(
           transitionDuration: const Duration(milliseconds: 300),
-          pageBuilder: (_, __, ___) => const AthleteSettingsScreen(),
+          pageBuilder: (_, __, ___) => AthleteSettingsScreen(userId: widget.userId),
           transitionsBuilder: (_, a, __, child) =>
               FadeTransition(opacity: a, child: child),
         ),
       );
       return;
     }
-    // Navegación a los favoritos
     if (i == 2) {
       Navigator.of(context).push(
         PageRouteBuilder(
           transitionDuration: const Duration(milliseconds: 300),
-          pageBuilder: (_, __, ___) => const AthleteSettingsScreen(),
+          pageBuilder: (_, __, ___) => AthleteSettingsScreen(userId: widget.userId),
           transitionsBuilder: (_, a, __, child) =>
               FadeTransition(opacity: a, child: child),
         ),
       );
       return;
     }
-    // Navegación a la configuración
     if (i == 3) {
       Navigator.of(context).push(
         PageRouteBuilder(
           transitionDuration: const Duration(milliseconds: 300),
-          pageBuilder: (_, __, ___) => const AthleteSettingsScreen(),
+          pageBuilder: (_, __, ___) => AthleteSettingsScreen(userId: widget.userId),
           transitionsBuilder: (_, a, __, child) =>
               FadeTransition(opacity: a, child: child),
         ),

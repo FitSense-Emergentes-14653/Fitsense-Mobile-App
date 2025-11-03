@@ -121,9 +121,10 @@ class _AthleteSetupFlowState extends State<AthleteSetupFlow> {
         const SnackBar(content: Text('Perfil creado. ¡Bienvenido!')),
       );
       Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (_) => const AthleteHomeScreen()),
+        MaterialPageRoute(builder: (_) => AthleteHomeScreen(userId: userId)),
             (_) => false,
       );
+
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(

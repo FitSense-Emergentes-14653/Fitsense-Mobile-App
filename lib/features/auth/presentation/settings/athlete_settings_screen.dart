@@ -17,7 +17,7 @@ import 'package:fitsense/features/auth/presentation/setup/athlete_setup_flow.dar
 import 'package:fitsense/features/auth/presentation/settings/athlete_edit_flow.dart';
 
 class AthleteSettingsScreen extends StatefulWidget {
-  const AthleteSettingsScreen({super.key});
+  const AthleteSettingsScreen({super.key, required int userId});
 
   @override
   State<AthleteSettingsScreen> createState() => _AthleteSettingsScreenState();
