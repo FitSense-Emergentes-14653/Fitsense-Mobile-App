@@ -144,7 +144,7 @@ class _AthleteChatbotScreenState extends State<AthleteChatbotScreen> {
                         Icon(Icons.bolt, color: Colors.amber, size: 18),
                         SizedBox(width: 6),
                         Text(
-                          'Asistente virtual',
+                          'Asistente inteligente',
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w600,
@@ -225,9 +225,14 @@ class _AthleteChatbotScreenState extends State<AthleteChatbotScreen> {
                         final prompt = _quickPrompts[index];
                         return ActionChip(
                           label: Text(prompt.label),
-                          backgroundColor: Colors.white.withOpacity(0.08),
-                          labelStyle: const TextStyle(color: Colors.white),
-                          side: const BorderSide(color: Colors.white24),
+                          backgroundColor: const Color(0xFF8A5CF6), // Color morado más visible
+                          labelStyle: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          side: BorderSide.none,
+                          elevation: 2,
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                           onPressed: () => _dispatchMessage(prompt.message),
                         );
                       },
