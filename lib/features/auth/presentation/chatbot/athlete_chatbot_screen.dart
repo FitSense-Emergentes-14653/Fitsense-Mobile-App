@@ -126,21 +126,12 @@ class _AthleteChatbotScreenState extends State<AthleteChatbotScreen> {
       final Map<String, dynamic> json = jsonDecode(res.body);
       final reply = (json['reply'] ?? '').toString();
 
-      // Campos extra del backend
-      final canChange = json['canChange']?.toString();
-      final generatedPlan = json['generatedPlan']?.toString();
-      final daysSince = json['daysSinceLastPlan']?.toString();
-
-      final suffix = [
-        if (canChange != null) 'canChange: $canChange',
-        if (generatedPlan != null) 'generatedPlan: $generatedPlan',
-        if (daysSince != null) 'daysSinceLastPlan: $daysSince',
-      ].join(' · ');
-
-      final botText = suffix.isEmpty ? reply : '$reply\n\n— $suffix';
+      final canChange = json['canChange'];
+      final generatedPlan = json['generatedPlan'];
+      final daysSince = json['daysSinceLastPlan'];
 
       setState(() {
-        _messages.add(_ChatMessage(text: botText, fromUser: false));
+        _messages.add(_ChatMessage(text: reply, fromUser: false));
       });
     } catch (e) {
       if (!mounted) return;
