@@ -247,5 +247,94 @@ class AuthRemoteDataSource extends BaseService {
       rethrow;
     }
   }
-}
 
+  // ---------------------------
+  // Chatbot Session Management
+  // ---------------------------
+  Future<Map<String, dynamic>> startChatSession() async {
+    final url = 'http://localhost:8085/session/start';
+
+    try {
+      final response = await http
+          .post(Uri.parse(url), headers: _headers())
+          .timeout(const Duration(seconds: 20));
+
+      print('🤖 DEBUG CHAT: startSession status: ${response.statusCode}');
+      print('📄 DEBUG CHAT: Body: ${response.body}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = _decodeJson<Map<String, dynamic>>(response.body);
+        print('✅ DEBUG CHAT: Session started | sessionId=${data['sessionId']}');
+        return data;
+      } else {
+        throw Exception('HTTP ${response.statusCode}: ${response.body}');
+      }
+    } catch (e) {
+      print('🚨 DEBUG CHAT: Exception starting session: $e');
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> sendChatMessage({
+    required String sessionId,
+    required String message,
+  }) async {
+    final url = 'http://localhost:8085/chat/send';
+    final body = {
+      'sessionId': sessionId,
+      'message': message,
+    };
+
+    try {
+      final response = await http
+          .post(
+            Uri.parse(url),
+            headers: _headers(),
+            body: jsonEncode(body)
+          )
+          .timeout(const Duration(seconds: 20));
+
+      print('🤖 DEBUG CHAT: sendMessage status: ${response.statusCode}');
+      print('📄 DEBUG CHAT: Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = _decodeJson<Map<String, dynamic>>(response.body);
+        print('✅ DEBUG CHAT: Message sent | response=${data['response']}');
+        return data;
+      } else {
+        throw Exception('HTTP ${response.statusCode}: ${response.body}');
+      }
+    } catch (e) {
+      print('🚨 DEBUG CHAT: Exception sending message: $e');
+      rethrow;
+    }
+  }
+
+  Future<bool> endChatSession(String sessionId) async {
+    final url = 'http://localhost:8085/session/end';
+    final body = {'sessionId': sessionId};
+
+    try {
+      final response = await http
+          .post(
+            Uri.parse(url),
+            headers: _headers(),
+            body: jsonEncode(body)
+          )
+          .timeout(const Duration(seconds: 20));
+
+      print('🤖 DEBUG CHAT: endSession status: ${response.statusCode}');
+      print('📄 DEBUG CHAT: Body: ${response.body}');
+
+      if (response.statusCode == 200) {
+        print('✅ DEBUG CHAT: Session ended successfully');
+        return true;
+      } else {
+        throw Exception('HTTP ${response.statusCode}: ${response.body}');
+      }
+    } catch (e) {
+      print('🚨 DEBUG CHAT: Exception ending session: $e');
+      rethrow;
+    }
+  }
+}

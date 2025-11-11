@@ -16,19 +16,36 @@ class AppBackground extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final content = Container(
-      color: Colors.black, // 🎯 Fondo negro sólido
-      child: child,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth > 600;
+
+        Widget content = Container(
+          color: Colors.black,
+          child: child,
+        );
+
+        if (scrollable) {
+          content = SingleChildScrollView(
+            child: content,
+            physics: const ClampingScrollPhysics(),
+          );
+        }
+
+        if (useSafeArea) {
+          content = SafeArea(
+            child: content,
+            minimum: EdgeInsets.symmetric(
+              horizontal: isWide ? 24.0 : 16.0,
+            ),
+          );
+        }
+
+        return Scaffold(
+          backgroundColor: Colors.black,
+          body: content,
+        );
+      },
     );
-
-    final safe = useSafeArea ? SafeArea(child: content) : content;
-
-    if (scrollable) {
-      return Scaffold(
-        backgroundColor: Colors.black,
-        body: SingleChildScrollView(child: safe),
-      );
-    }
-    return Scaffold(backgroundColor: Colors.black, body: safe);
   }
 }

@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:fitsense/core/widgets/drawer/background.dart';
 import 'package:fitsense/core/widgets/drawer/user_navbar.dart';
-
-import 'package:fitsense/features/auth/presentation/settings/athlete_settings_screen.dart';
 import '../chatbot/athlete_chatbot_screen.dart';
+import '../settings/athlete_settings_screen.dart';
+import 'tabs/home_tab.dart';
+import 'tabs/routines_tab.dart';
+import 'tabs/progress_tab.dart';
 
 class AthleteHomeScreen extends StatefulWidget {
   final int userId;
+
   const AthleteHomeScreen({super.key, required this.userId});
 
   @override
@@ -16,8 +19,10 @@ class AthleteHomeScreen extends StatefulWidget {
 class _AthleteHomeScreenState extends State<AthleteHomeScreen> {
   int _index = 0;
 
-  final List<Widget> _screens = const [
-    _HomeTab()
+  List<Widget> get _screens => [
+    HomeTab(userId: widget.userId),
+    RoutinesTab(userId: widget.userId),
+    ProgressTab(userId: widget.userId),
   ];
 
   void _openChatbot() {
@@ -25,121 +30,89 @@ class _AthleteHomeScreenState extends State<AthleteHomeScreen> {
       PageRouteBuilder(
         transitionDuration: const Duration(milliseconds: 300),
         pageBuilder: (_, __, ___) => AthleteChatbotScreen(userId: widget.userId),
-        transitionsBuilder: (_, a, __, child) =>
-            FadeTransition(opacity: a, child: child),
+        transitionsBuilder: (_, a, __, child) => FadeTransition(opacity: a, child: child),
       ),
     );
-  }
-
-  void _onTapNavbar(int i) {
-    if (i == 1) {
-      Navigator.of(context).push(
-        PageRouteBuilder(
-          transitionDuration: const Duration(milliseconds: 300),
-          pageBuilder: (_, __, ___) => AthleteSettingsScreen(userId: widget.userId),
-          transitionsBuilder: (_, a, __, child) =>
-              FadeTransition(opacity: a, child: child),
-        ),
-      );
-      return;
-    }
-    if (i == 2) {
-      Navigator.of(context).push(
-        PageRouteBuilder(
-          transitionDuration: const Duration(milliseconds: 300),
-          pageBuilder: (_, __, ___) => AthleteSettingsScreen(userId: widget.userId),
-          transitionsBuilder: (_, a, __, child) =>
-              FadeTransition(opacity: a, child: child),
-        ),
-      );
-      return;
-    }
-    if (i == 3) {
-      Navigator.of(context).push(
-        PageRouteBuilder(
-          transitionDuration: const Duration(milliseconds: 300),
-          pageBuilder: (_, __, ___) => AthleteSettingsScreen(userId: widget.userId),
-          transitionsBuilder: (_, a, __, child) =>
-              FadeTransition(opacity: a, child: child),
-        ),
-      );
-      return;
-    }
-    setState(() => _index = i);
   }
 
   @override
   Widget build(BuildContext context) {
     return AppBackground(
       useSafeArea: false,
-      child: Stack(
-        children: [
-          // Contenido principal
-          Positioned.fill(
-            child: AnimatedSwitcher(
-              duration: const Duration(milliseconds: 300),
-              child: _screens[_index],
-            ),
-          ),
-          SafeArea(
-            minimum: const EdgeInsets.only(
-              right: 20,
-              bottom: 12 + UserNavbar.kHeight,
-            ),
-            child: Align(
-              alignment: Alignment.bottomRight,
-              child: FloatingActionButton.extended(
-                heroTag: 'athlete_chatbot',
-                onPressed: _openChatbot,
-                backgroundColor: const Color(0xFF8A5CF6),
-                foregroundColor: Colors.white,
-                icon: const Icon(Icons.chat_bubble_outline_rounded),
-                label: const Text(
-                  'Chat',
-                  style: TextStyle(fontWeight: FontWeight.w700),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final isWide = constraints.maxWidth > 600;
+          final maxContentWidth = constraints.maxWidth > 1200 ? 1200.0 : constraints.maxWidth;
+
+          return Stack(
+            children: [
+              // Contenido principal
+              Positioned.fill(
+                child: Center(
+                  child: Container(
+                    constraints: BoxConstraints(
+                      maxWidth: maxContentWidth,
+                    ),
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isWide ? 24.0 : 16.0,
+                    ),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 300),
+                      child: _screens[_index],
+                    ),
+                  ),
                 ),
               ),
-            ),
-          ),
-
-          // Navbar inferior
-          Positioned(
-            left: 0,
-            right: 0,
-            bottom: 12,
-            child: UserNavbar(
-              selectedIndex: _index,
-              onTap: _onTapNavbar,
-            ),
-          ),
-        ],
+              // Botón de chat
+              SafeArea(
+                minimum: EdgeInsets.only(
+                  right: isWide ? 32.0 : 20.0,
+                  bottom: 12 + UserNavbar.kHeight,
+                ),
+                child: Align(
+                  alignment: Alignment.bottomRight,
+                  child: FloatingActionButton.extended(
+                    heroTag: 'athlete_chatbot',
+                    onPressed: _openChatbot,
+                    backgroundColor: const Color(0xFF8A5CF6),
+                    foregroundColor: Colors.white,
+                    icon: const Icon(Icons.chat_bubble_outline_rounded),
+                    label: const Text(
+                      'Chat',
+                      style: TextStyle(fontWeight: FontWeight.w700),
+                    ),
+                  ),
+                ),
+              ),
+              // Barra de navegación
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: UserNavbar(
+                  selectedIndex: _index,
+                  onTap: (index) {
+                    if (index == 3) {
+                      // Configuración
+                      Navigator.of(context).push(
+                        PageRouteBuilder(
+                          transitionDuration: const Duration(milliseconds: 300),
+                          pageBuilder: (_, __, ___) => AthleteSettingsScreen(userId: widget.userId),
+                          transitionsBuilder: (_, a, __, c) => FadeTransition(opacity: a, child: c),
+                        ),
+                      );
+                    } else {
+                      setState(() => _index = index);
+                    }
+                  },
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 }
 
-class _HomeTab extends StatelessWidget {
-  const _HomeTab();
 
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      key: const ValueKey('home'),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: const [
-          Icon(Icons.fitness_center, color: Colors.white, size: 64),
-          SizedBox(height: 12),
-          Text(
-            'Athlete Home',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 22,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}

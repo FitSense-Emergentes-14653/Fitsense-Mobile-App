@@ -66,10 +66,12 @@ class _LoginScreenState extends State<LoginScreen> {
 
       // Ideal: tener endpoint /athletes/me; por ahora fallback:
       final list = await repo.getAll();
-      final exists = list.any((a) => a.userId == userId);
+      final athlete = list.where((a) => a.userId == userId).firstOrNull;
 
       if (!mounted) return;
-      if (!exists) {
+
+      if (athlete == null) {
+        // No existe perfil de atleta -> ir al setup
         Navigator.of(context).pushReplacement(
           PageRouteBuilder(
             transitionDuration: const Duration(milliseconds: 500),
@@ -80,6 +82,9 @@ class _LoginScreenState extends State<LoginScreen> {
         );
         return;
       }
+
+      // El atleta existe -> guardar su ID en la sesión
+      await _session.setAthleteId(athlete.id);
     }
 
     Navigator.of(context).pushAndRemoveUntil(

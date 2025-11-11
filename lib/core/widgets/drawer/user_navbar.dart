@@ -14,41 +14,70 @@ class UserNavbar extends StatelessWidget {
   static const double kHeight = 120;
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      top: false,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-        color: Colors.transparent,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            _RoundButton(
-              assetPath: 'lib/assets/images/home.png',
-              label: ' ',
-              selected: selectedIndex == 0,
-              onTap: () => onTap?.call(0),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth > 600;
+        final maxWidth =
+            constraints.maxWidth > 1200 ? 1200.0 : constraints.maxWidth;
+
+        return SafeArea(
+          top: false,
+          child: Center(
+            child: Container(
+              constraints: BoxConstraints(maxWidth: maxWidth),
+              padding: EdgeInsets.symmetric(
+                horizontal: isWide ? 32.0 : 20.0,
+                vertical: 10,
+              ),
+              color: Colors.transparent,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  Expanded(
+                    child: _RoundButton(
+                      assetPath: 'lib/assets/images/home.png',
+                      label: ' ',
+                      selected: selectedIndex == 0,
+                      onTap: () => onTap?.call(0),
+                      isWide: isWide,
+                    ),
+                  ),
+                  SizedBox(width: isWide ? 24.0 : 12.0),
+                  Expanded(
+                    child: _RoundButton(
+                      assetPath: 'lib/assets/images/chat.png',
+                      label: ' ',
+                      selected: selectedIndex == 1,
+                      onTap: () => onTap?.call(1),
+                      isWide: isWide,
+                    ),
+                  ),
+                  SizedBox(width: isWide ? 24.0 : 12.0),
+                  Expanded(
+                    child: _RoundButton(
+                      assetPath: 'lib/assets/images/stars.png',
+                      label: ' ',
+                      selected: selectedIndex == 2,
+                      onTap: () => onTap?.call(2),
+                      isWide: isWide,
+                    ),
+                  ),
+                  SizedBox(width: isWide ? 24.0 : 12.0),
+                  Expanded(
+                    child: _RoundButton(
+                      assetPath: 'lib/assets/images/config.png',
+                      label: ' ',
+                      selected: selectedIndex == 3,
+                      onTap: () => onTap?.call(3),
+                      isWide: isWide,
+                    ),
+                  ),
+                ],
+              ),
             ),
-            _RoundButton(
-              assetPath: 'lib/assets/images/chat.png',
-              label: ' ',
-              selected: selectedIndex == 1,
-              onTap: () => onTap?.call(1),
-            ),
-            _RoundButton(
-              assetPath: 'lib/assets/images/stars.png',
-              label: ' ',
-              selected: selectedIndex == 2,
-              onTap: () => onTap?.call(2),
-            ),
-            _RoundButton(
-              assetPath: 'lib/assets/images/config.png',
-              label: ' ',
-              selected: selectedIndex == 3,
-              onTap: () => onTap?.call(3),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }
@@ -58,12 +87,14 @@ class _RoundButton extends StatefulWidget {
   final String label;
   final bool selected;
   final VoidCallback? onTap;
+  final bool isWide;
 
   const _RoundButton({
     required this.assetPath,
     required this.label,
     required this.selected,
     this.onTap,
+    this.isWide = false,
   });
 
   @override

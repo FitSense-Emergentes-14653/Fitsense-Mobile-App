@@ -17,7 +17,8 @@ import 'package:fitsense/features/auth/presentation/setup/athlete_setup_flow.dar
 import 'package:fitsense/features/auth/presentation/settings/athlete_edit_flow.dart';
 
 class AthleteSettingsScreen extends StatefulWidget {
-  const AthleteSettingsScreen({super.key, required int userId});
+  final int userId;
+  const AthleteSettingsScreen({super.key, required this.userId});
 
   @override
   State<AthleteSettingsScreen> createState() => _AthleteSettingsScreenState();
@@ -39,9 +40,8 @@ class _AthleteSettingsScreenState extends State<AthleteSettingsScreen> {
 
   Future<AthleteModel?> _load() async {
     await _session.init();
-    final userId = _session.getUserId();
-    if (userId <= 0) return null;
-    return _repo.findByUserIdOrNull(userId);
+    if (widget.userId <= 0) return null;
+    return _repo.findByUserIdOrNull(widget.userId);
   }
 
   String _freqLabel(int n) {

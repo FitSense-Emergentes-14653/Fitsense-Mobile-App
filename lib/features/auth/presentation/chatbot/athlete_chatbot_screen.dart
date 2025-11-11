@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:fitsense/core/widgets/drawer/background.dart';
+import 'package:fitsense/infrastructure/config/app_config.dart';
 
 class AthleteChatbotScreen extends StatefulWidget {
   final int userId;
@@ -12,7 +13,10 @@ class AthleteChatbotScreen extends StatefulWidget {
 }
 
 class _AthleteChatbotScreenState extends State<AthleteChatbotScreen> {
-  static const String _baseUrl = 'http://10.0.2.2:8085';
+  /// URL base del chatbot - usa detección automática de plataforma
+  /// - Android Emulator: http://10.0.2.2:8085
+  /// - Web (Chrome): http://localhost:8085
+  String get _baseUrl => AppConfig.chatbotBaseUrl;
 
   final _scrollController = ScrollController();
   final _inputCtrl = TextEditingController();
@@ -58,7 +62,14 @@ class _AthleteChatbotScreenState extends State<AthleteChatbotScreen> {
     });
 
     try {
+      // Logs de debugging
+      print('🤖 [Chatbot] Plataforma detectada: ${AppConfig.platformInfo}');
+      print('🌐 [Chatbot] URL del chatbot: $_baseUrl');
+      print('👤 [Chatbot] Usuario ID: ${widget.userId}');
+
       final uri = Uri.parse('$_baseUrl/session/start');
+      print('📡 [Chatbot] Iniciando POST a: $uri');
+
       final res = await http.post(
         uri,
         headers: const {
@@ -69,6 +80,8 @@ class _AthleteChatbotScreenState extends State<AthleteChatbotScreen> {
           'userId': '${widget.userId}',
         }),
       );
+
+      print('✅ [Chatbot] Respuesta: ${res.statusCode}');
 
       if (res.statusCode != 200) {
         throw Exception('HTTP ${res.statusCode}: ${res.body}');
@@ -106,7 +119,10 @@ class _AthleteChatbotScreenState extends State<AthleteChatbotScreen> {
     _scrollToBottom();
 
     try {
+      print('💬 [Chatbot] Enviando mensaje: "$trimmed"');
       final uri = Uri.parse('$_baseUrl/chat/send');
+      print('📡 [Chatbot] POST a: $uri');
+
       final res = await http.post(
         uri,
         headers: const {
@@ -126,12 +142,21 @@ class _AthleteChatbotScreenState extends State<AthleteChatbotScreen> {
       final Map<String, dynamic> json = jsonDecode(res.body);
       final reply = (json['reply'] ?? '').toString();
 
-      final canChange = json['canChange'];
-      final generatedPlan = json['generatedPlan'];
-      final daysSince = json['daysSinceLastPlan'];
+      // Campos extra del backend
+      final canChange = json['canChange']?.toString();
+      final generatedPlan = json['generatedPlan']?.toString();
+      final daysSince = json['daysSinceLastPlan']?.toString();
+
+      final suffix = [
+        if (canChange != null) 'canChange: $canChange',
+        if (generatedPlan != null) 'generatedPlan: $generatedPlan',
+        if (daysSince != null) 'daysSinceLastPlan: $daysSince',
+      ].join(' · ');
+
+      final botText = suffix.isEmpty ? reply : '$reply\n\n— $suffix';
 
       setState(() {
-        _messages.add(_ChatMessage(text: reply, fromUser: false));
+        _messages.add(_ChatMessage(text: botText, fromUser: false));
       });
     } catch (e) {
       if (!mounted) return;
@@ -161,8 +186,8 @@ class _AthleteChatbotScreenState extends State<AthleteChatbotScreen> {
   }
 
   void _tapQuickPrompt(_QuickPrompt p) {
-    _inputCtrl.text = p.message;
     _sendMessage(p.message);
+    _inputCtrl.clear();
   }
 
 
@@ -231,28 +256,64 @@ class _AthleteChatbotScreenState extends State<AthleteChatbotScreen> {
                     ),
                   ),
                   const Spacer(),
-                  if (_sessionId != null)
+                  // Indicador de plataforma (útil para debugging)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.white24),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          AppConfig.platformInfo == 'Android'
+                              ? Icons.android
+                              : AppConfig.platformInfo == 'Web'
+                                  ? Icons.web
+                                  : Icons.phone_iphone,
+                          color: Colors.greenAccent,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          AppConfig.platformInfo,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (_sessionId != null) ...[
+                    const SizedBox(width: 8),
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       decoration: BoxDecoration(
                         color: Colors.white.withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: Colors.white24),
                       ),
                       child: Row(
+                        mainAxisSize: MainAxisSize.min,
                         children: [
-                          const Icon(Icons.bolt, color: Colors.amber, size: 18),
+                          const Icon(Icons.bolt, color: Colors.amber, size: 16),
                           const SizedBox(width: 6),
                           Text(
-                            'Sesión: $_sessionId',
+                            'ID: ${_sessionId!.length > 8 ? _sessionId!.substring(0, 8) : _sessionId}...',
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.w600,
+                              fontSize: 11,
                             ),
                           ),
                         ],
                       ),
                     ),
+                  ],
                 ],
               ),
             ),

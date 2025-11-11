@@ -178,10 +178,14 @@ class _AthleteEditFlowState extends State<AthleteEditFlow> {
       useSafeArea: false,
       child: Column(
         children: [
-          const SizedBox(height: 36),
           // AppBar simple
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
+            padding: EdgeInsets.only(
+              top: MediaQuery.of(context).padding.top + 12,
+              left: 12.0,
+              right: 12.0,
+              bottom: 12,
+            ),
             child: Row(
               children: [
                 IconButton(
@@ -194,236 +198,301 @@ class _AthleteEditFlowState extends State<AthleteEditFlow> {
                   style: TextStyle(color: Colors.white, fontWeight: FontWeight.w800),
                 ),
                 const Spacer(),
+                const SizedBox(width: 48),
               ],
             ),
           ),
           Expanded(
-            child: PageView(
+            child: PageView.builder(
               controller: _pc,
               physics: const NeverScrollableScrollPhysics(),
-              children: [
-                // 0) Intro
-                _IntroStep(
-                  onNext: _next,
-                  heroAsset: 'lib/assets/images/woman-training-workout-gym.png',
-                ),
-
-                // 1) Género
-                _CardScaffold(
-                  title: '¿Cuál Es Tu Género?',
-                  subtitle: 'Selecciona tu género para personalizar tus objetivos.',
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                    children: [
-                      _GenderOption(
-                        label: 'Masculino',
-                        icon: Icons.male_rounded,
-                        selected: gender == 'Masculino',
-                        onTap: () => setState(() => gender = 'Masculino'),
-                      ),
-                      _GenderOption(
-                        label: 'Femenino',
-                        icon: Icons.female_rounded,
-                        selected: gender == 'Femenino',
-                        onTap: () => setState(() => gender = 'Femenino'),
-                      ),
-                    ],
-                  ),
-                  bottom: nextBtn('Siguiente'),
-                ),
-
-                // 2) Edad
-                _CardScaffold(
-                  title: '¿Cuántos Años Tienes?',
-                  subtitle: 'Desliza para ajustar tu edad.',
-                  child: _NumberPicker(
-                    value: age,
-                    min: 10,
-                    max: 90,
-                    onChanged: (v) => setState(() => age = v),
-                    accent: lilac,
-                  ),
-                  bottom: nextBtn('Siguiente'),
-                ),
-
-                // 3) Peso (KG/LB)
-                _CardScaffold(
-                  title: '¿Cuál Es Tu Peso?',
-                  subtitle: 'Selecciona la unidad y ajusta tu peso.',
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ToggleButtons(
-                        isSelected: [useKg, !useKg],
-                        borderRadius: BorderRadius.circular(12),
-                        children: const [
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text('KG')),
-                          Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text('LB')),
-                        ],
-                        onPressed: (i) => setState(() => useKg = (i == 0)),
-                      ),
-                      const SizedBox(height: 12),
-                      _SliderWithMarks(
-                        min: 30,
-                        max: 180,
-                        value: weight,
-                        onChanged: (v) => setState(() => weight = v),
-                        accent: lilac,
-                        label: '${weight.toStringAsFixed(0)} ${useKg ? 'Kg' : 'Lb'}',
-                      ),
-                    ],
-                  ),
-                  bottom: nextBtn('Siguiente'),
-                ),
-
-                // 4) Altura
-                _CardScaffold(
-                  title: '¿Cuál Es Tu Altura?',
-                  subtitle: 'Ajusta tu altura en centímetros.',
-                  child: _SliderWithMarks(
-                    min: 140,
-                    max: 200,
-                    value: heightCm.toDouble(),
-                    onChanged: (v) => setState(() => heightCm = v.round()),
-                    accent: lilac,
-                    label: '$heightCm cm',
-                  ),
-                  bottom: nextBtn('Siguiente'),
-                ),
-
-                // 5) Meta
-                _CardScaffold(
-                  title: '¿Cuál Es Tu Meta?',
-                  subtitle: 'Elige una opción.',
-                  child: _SingleChoice(
-                    options: const [
-                      'Perder Peso',
-                      'Ganar Peso',
-                      'Aumento de masa muscular',
-                      'Moldear El Cuerpo',
-                      'Otros',
-                    ],
-                    value: goal,
-                    onChanged: (v) => setState(() => goal = v),
-                  ),
-                  bottom: nextBtn('Siguiente'),
-                ),
-
-                // 6) Nivel de Actividad
-                _CardScaffold(
-                  title: 'Nivel De Actividad Física',
-                  subtitle: 'Elige tu nivel.',
-                  child: _SingleChoiceChips(
-                    options: const ['Principiante', 'Intermedio', 'Avanzado'],
-                    value: activityLevel,
-                    onChanged: (v) => setState(() => activityLevel = v),
-                    accent: green,
-                  ),
-                  bottom: nextBtn('Siguiente'),
-                ),
-
-                // 7) Entorno de entrenamiento
-                _CardScaffold(
-                  title: '¿Dónde entrenas normalmente?',
-                  subtitle: 'Selecciona tu entorno habitual.',
-                  child: _SingleChoiceChipsNullable(
-                    options: const ['Casa', 'Gimnasio', 'Aire Libre', 'Sin preferencia'],
-                    value: environment,
-                    onChanged: (v) => setState(() => environment = v),
-                    accent: lilac,
-                  ),
-                  bottom: nextBtn('Siguiente'),
-                ),
-
-                // 8) Frecuencia (veces/semana)
-                _CardScaffold(
-                  title: '¿Con qué frecuencia entrenas?',
-                  subtitle: 'Veces por semana',
-                  child: Column(
-                    children: [
-                      Text(freqLabel(frecuency),
-                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-                      Slider(
-                        value: frecuency.toDouble(),
-                        min: 1,
-                        max: 5,
-                        divisions: 4,
-                        label: freqLabel(frecuency),
-                        onChanged: (v) => setState(() => frecuency = v.round()),
-                      )
-                    ],
-                  ),
-                  bottom: nextBtn('Siguiente'),
-                ),
-
-                // 9) Datos de contacto + equipo (opcional)
-                _CardScaffold(
-                  title: 'Datos de Contacto',
-                  subtitle: 'Tu nombre y teléfono.',
-                  child: Column(
-                    children: [
-                      _TextBox(hint: 'Nombre Completo', controller: nameCtrl),
-                      const SizedBox(height: 12),
-                      _TextBox(
-                        hint: 'Teléfono (opcional)',
-                        controller: phoneCtrl,
-                        keyboardType: TextInputType.phone,
-                      ),
-                      const SizedBox(height: 16),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'Equipamiento (opcional)',
-                          style: TextStyle(color: Colors.white.withOpacity(.9), fontWeight: FontWeight.w600),
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
-                        children: [
-                          for (final e in const ['Mancuernas', 'Banda elástica', 'Colchoneta', 'Cuerda'])
-                            FilterChip(
-                              selected: equipment.contains(e),
-                              label: Text(e),
-                              onSelected: (s) {
-                                setState(() {
-                                  if (s) {
-                                    equipment.add(e);
-                                  } else {
-                                    equipment.remove(e);
-                                  }
-                                });
-                              },
-                            ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  bottom: SizedBox(
-                    width: double.infinity,
-                    height: 46,
-                    child: ElevatedButton(
-                      onPressed: _saving ? null : _save,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF1E1E1E),
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
-                          side: const BorderSide(color: Colors.white24),
-                        ),
-                      ),
-                      child: _saving
-                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                          : const Text('Guardar cambios', style: TextStyle(fontWeight: FontWeight.w700)),
-                    ),
-                  ),
-                ),
-              ],
+              itemCount: 10,
+              itemBuilder: (context, index) {
+                return _buildPage(index, nextBtn, lilac, green);
+              },
             ),
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildPage(int index, Function(String) nextBtn, Color lilac, Color green) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth > 600;
+        final maxW = constraints.maxWidth > 800 ? 600.0 : constraints.maxWidth - 32;
+
+        return SingleChildScrollView(
+          child: Padding(
+            padding: EdgeInsets.symmetric(horizontal: isWide ? 32.0 : 16.0, vertical: 16.0),
+            child: Center(
+              child: SizedBox(
+                width: maxW,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (index == 0)
+                      _IntroStep(
+                        onNext: _next,
+                        heroAsset: 'lib/assets/images/woman-training-workout-gym.png',
+                        isWide: isWide,
+                      )
+                    else if (index == 1)
+                      _CardScaffold(
+                        title: '¿Cuál Es Tu Género?',
+                        subtitle: 'Selecciona tu género para personalizar tus objetivos.',
+                        isWide: isWide,
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            _GenderOption(
+                              label: 'Masculino',
+                              icon: Icons.male_rounded,
+                              selected: gender == 'Masculino',
+                              onTap: () => setState(() => gender = 'Masculino'),
+                            ),
+                            SizedBox(width: isWide ? 24 : 16),
+                            _GenderOption(
+                              label: 'Femenino',
+                              icon: Icons.female_rounded,
+                              selected: gender == 'Femenino',
+                              onTap: () => setState(() => gender = 'Femenino'),
+                            ),
+                          ],
+                        ),
+                        bottom: nextBtn('Siguiente'),
+                      )
+                    else if (index == 2)
+                      _CardScaffold(
+                        title: '¿Cuántos Años Tienes?',
+                        subtitle: 'Desliza para ajustar tu edad.',
+                        isWide: isWide,
+                        child: _NumberPicker(
+                          value: age,
+                          min: 10,
+                          max: 90,
+                          onChanged: (v) => setState(() => age = v),
+                          accent: lilac,
+                        ),
+                        bottom: nextBtn('Siguiente'),
+                      )
+                    else if (index == 3)
+                      _CardScaffold(
+                        title: '¿Cuál Es Tu Peso?',
+                        subtitle: 'Selecciona la unidad y ajusta tu peso.',
+                        isWide: isWide,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            ToggleButtons(
+                              isSelected: [useKg, !useKg],
+                              borderRadius: BorderRadius.circular(12),
+                              children: const [
+                                Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text('KG')),
+                                Padding(padding: EdgeInsets.symmetric(horizontal: 16), child: Text('LB')),
+                              ],
+                              onPressed: (i) => setState(() => useKg = (i == 0)),
+                            ),
+                            const SizedBox(height: 12),
+                            _SliderWithMarks(
+                              min: 30,
+                              max: 180,
+                              value: weight,
+                              onChanged: (v) => setState(() => weight = v),
+                              accent: lilac,
+                              label: '${weight.toStringAsFixed(0)} ${useKg ? 'Kg' : 'Lb'}',
+                            ),
+                          ],
+                        ),
+                        bottom: nextBtn('Siguiente'),
+                      )
+                    else if (index == 4)
+                      _CardScaffold(
+                        title: '¿Cuál Es Tu Altura?',
+                        subtitle: 'Ajusta tu altura en centímetros.',
+                        isWide: isWide,
+                        child: _SliderWithMarks(
+                          min: 140,
+                          max: 200,
+                          value: heightCm.toDouble(),
+                          onChanged: (v) => setState(() => heightCm = v.round()),
+                          accent: lilac,
+                          label: '$heightCm cm',
+                        ),
+                        bottom: nextBtn('Siguiente'),
+                      )
+                    else if (index == 5)
+                      _CardScaffold(
+                        title: '¿Cuál Es Tu Meta?',
+                        subtitle: 'Elige una opción.',
+                        isWide: isWide,
+                        child: SingleChildScrollView(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              for (final o in const [
+                                'Perder Peso',
+                                'Ganar Peso',
+                                'Aumento de masa muscular',
+                                'Moldear El Cuerpo',
+                                'Otros',
+                              ])
+                                Container(
+                                  margin: const EdgeInsets.symmetric(vertical: 4),
+                                  child: ListTile(
+                                    dense: true,
+                                    title: Text(o, style: const TextStyle(color: Colors.black)),
+                                    leading: Radio<String>(
+                                      value: o,
+                                      groupValue: goal,
+                                      onChanged: (v) => setState(() => goal = v),
+                                    ),
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        bottom: nextBtn('Siguiente'),
+                      )
+                    else if (index == 6)
+                      _CardScaffold(
+                        title: 'Nivel De Actividad Física',
+                        subtitle: 'Elige tu nivel.',
+                        isWide: isWide,
+                        child: Wrap(
+                          spacing: 8,
+                          alignment: WrapAlignment.center,
+                          children: [
+                            for (final o in const ['Principiante', 'Intermedio', 'Avanzado'])
+                              ChoiceChip(
+                                label: Text(o, style: TextStyle(color: activityLevel == o ? Colors.white : Colors.black)),
+                                selected: activityLevel == o,
+                                selectedColor: green,
+                                backgroundColor: Colors.white,
+                                onSelected: (_) => setState(() => activityLevel = o),
+                              ),
+                          ],
+                        ),
+                        bottom: nextBtn('Siguiente'),
+                      )
+                    else if (index == 7)
+                      _CardScaffold(
+                        title: '¿Dónde entrenas normalmente?',
+                        subtitle: 'Selecciona tu entorno habitual.',
+                        isWide: isWide,
+                        child: Wrap(
+                          spacing: 8,
+                          alignment: WrapAlignment.center,
+                          children: [
+                            for (final o in const ['Casa', 'Gimnasio', 'Aire Libre', 'Sin preferencia'])
+                              ChoiceChip(
+                                label: Text(o, style: TextStyle(color: environment == o ? Colors.black : Colors.black54)),
+                                selected: environment == o,
+                                selectedColor: lilac,
+                                backgroundColor: Colors.white,
+                                onSelected: (_) => setState(() => environment = o),
+                              ),
+                          ],
+                        ),
+                        bottom: nextBtn('Siguiente'),
+                      )
+                    else if (index == 8)
+                      _CardScaffold(
+                        title: '¿Con qué frecuencia entrenas?',
+                        subtitle: 'Veces por semana',
+                        isWide: isWide,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text('$frecuency', style: const TextStyle(fontSize: 44, fontWeight: FontWeight.w800, color: Colors.black)),
+                            Slider(
+                              value: frecuency.toDouble(),
+                              min: 1,
+                              max: 5,
+                              divisions: 4,
+                              label: freqLabel(frecuency),
+                              onChanged: (v) => setState(() => frecuency = v.round()),
+                            )
+                          ],
+                        ),
+                        bottom: nextBtn('Siguiente'),
+                      )
+                    else if (index == 9)
+                      _CardScaffold(
+                        title: 'Datos de Contacto',
+                        subtitle: 'Tu nombre y teléfono.',
+                        isWide: isWide,
+                        child: SingleChildScrollView(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _TextBox(hint: 'Nombre Completo', controller: nameCtrl),
+                              const SizedBox(height: 12),
+                              _TextBox(
+                                hint: 'Teléfono (opcional)',
+                                controller: phoneCtrl,
+                                keyboardType: TextInputType.phone,
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Equipamiento (opcional)',
+                                style: TextStyle(
+                                  color: Colors.black.withValues(alpha: 0.9),
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: [
+                                  for (final e in const ['Mancuernas', 'Banda elástica', 'Colchoneta', 'Cuerda'])
+                                    FilterChip(
+                                      selected: equipment.contains(e),
+                                      label: Text(e),
+                                      onSelected: (s) {
+                                        setState(() {
+                                          if (s) {
+                                            equipment.add(e);
+                                          } else {
+                                            equipment.remove(e);
+                                          }
+                                        });
+                                      },
+                                    ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                        bottom: SizedBox(
+                          width: double.infinity,
+                          height: 46,
+                          child: ElevatedButton(
+                            onPressed: _saving ? null : _save,
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF1E1E1E),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(24),
+                                side: const BorderSide(color: Colors.white24),
+                              ),
+                            ),
+                            child: _saving
+                                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2))
+                                : const Text('Guardar cambios', style: TextStyle(fontWeight: FontWeight.w700)),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -433,34 +502,44 @@ class _AthleteEditFlowState extends State<AthleteEditFlow> {
 class _IntroStep extends StatelessWidget {
   final String heroAsset;
   final VoidCallback onNext;
-  const _IntroStep({required this.heroAsset, required this.onNext});
+  final bool isWide;
+  const _IntroStep({required this.heroAsset, required this.onNext, required this.isWide});
 
   @override
   Widget build(BuildContext context) {
     const lilac = Color(0xFFC8B8FF);
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         const SizedBox(height: 8),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 18),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(isWide ? 16.0 : 12.0),
+          child: Container(
+            constraints: BoxConstraints(
+              maxHeight: isWide ? 400 : 280,
+            ),
             child: AspectRatio(
-              aspectRatio: 9 / 16,
+              aspectRatio: isWide ? 16 / 9 : 4 / 3,
               child: Stack(
                 fit: StackFit.expand,
                 children: [
                   Image.asset(heroAsset, fit: BoxFit.cover),
-                  Container(color: Colors.black.withOpacity(.35)),
+                  Container(color: Colors.black.withValues(alpha: 0.35)),
                   Align(
                     alignment: Alignment.bottomCenter,
                     child: Container(
                       color: lilac,
-                      padding: const EdgeInsets.fromLTRB(16, 14, 16, 18),
-                      child: const Text(
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isWide ? 24.0 : 16.0,
+                        vertical: isWide ? 20.0 : 14.0,
+                      ),
+                      child: Text(
                         'Ajusta tus datos para mantener tu plan al día.',
                         textAlign: TextAlign.center,
-                        style: TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
+                        style: TextStyle(
+                          fontWeight: FontWeight.w800,
+                          fontSize: isWide ? 18.0 : 16.0,
+                        ),
                       ),
                     ),
                   ),
@@ -470,18 +549,18 @@ class _IntroStep extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
-        const Padding(
-          padding: EdgeInsets.symmetric(horizontal: 22),
-          child: Text(
-            'Repasemos tus datos en pocos pasos.',
-            textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.white70),
+        Text(
+          'Repasemos tus datos en pocos pasos.',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.white70,
+            fontSize: isWide ? 16.0 : 14.0,
           ),
         ),
         const SizedBox(height: 16),
         SizedBox(
-          width: 180,
-          height: 46,
+          width: isWide ? 200 : 180,
+          height: isWide ? 50 : 46,
           child: ElevatedButton(
             onPressed: onNext,
             style: ElevatedButton.styleFrom(
@@ -492,9 +571,16 @@ class _IntroStep extends StatelessWidget {
                 side: const BorderSide(color: Colors.white24),
               ),
             ),
-            child: const Text('Comenzar', style: TextStyle(fontWeight: FontWeight.w700)),
+            child: Text(
+              'Comenzar',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: isWide ? 16.0 : 14.0,
+              ),
+            ),
           ),
         ),
+        const SizedBox(height: 16),
       ],
     );
   }
@@ -505,42 +591,54 @@ class _CardScaffold extends StatelessWidget {
   final String subtitle;
   final Widget child;
   final Widget bottom;
+  final bool isWide;
 
   const _CardScaffold({
     required this.title,
     required this.subtitle,
     required this.child,
     required this.bottom,
+    required this.isWide,
   });
 
   @override
   Widget build(BuildContext context) {
     const lilac = Color(0xFFC8B8FF);
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 18),
-      child: Column(
-        children: [
-          const SizedBox(height: 6),
-          Text(title, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.w800)),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Text(subtitle, textAlign: TextAlign.center, style: const TextStyle(color: Colors.white70)),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const SizedBox(height: 6),
+        Text(
+          title,
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: isWide ? 24.0 : 20.0,
+            fontWeight: FontWeight.w800,
           ),
-          const SizedBox(height: 16),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(color: lilac, borderRadius: BorderRadius.circular(8)),
-            child: child,
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 8),
+        Text(
+          subtitle,
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            color: Colors.white70,
+            fontSize: isWide ? 16.0 : 14.0,
           ),
-          const Spacer(),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 18),
-            child: bottom,
+        ),
+        const SizedBox(height: 16),
+        Container(
+          width: double.infinity,
+          padding: EdgeInsets.all(isWide ? 24.0 : 16.0),
+          decoration: BoxDecoration(
+            color: lilac,
+            borderRadius: BorderRadius.circular(isWide ? 12.0 : 8.0),
           ),
-        ],
-      ),
+          child: child,
+        ),
+        const SizedBox(height: 24),
+        bottom,
+      ],
     );
   }
 }
@@ -563,19 +661,19 @@ class _GenderOption extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 130,
-        height: 160,
+        width: 100,
+        height: 130,
         decoration: BoxDecoration(
           color: Colors.white,
           shape: BoxShape.circle,
-          boxShadow: [BoxShadow(color: Colors.black.withOpacity(.2), blurRadius: 8)],
+          boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.2), blurRadius: 8)],
         ),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(icon, size: 56, color: color),
+            Icon(icon, size: 48, color: color),
             const SizedBox(height: 8),
-            Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w600)),
+            Text(label, style: TextStyle(color: color, fontWeight: FontWeight.w600, fontSize: 12)),
           ],
         ),
       ),
@@ -601,6 +699,7 @@ class _NumberPicker extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
         Text('$value', style: const TextStyle(fontSize: 48, color: Colors.black, fontWeight: FontWeight.w800)),
         Slider(
@@ -609,7 +708,7 @@ class _NumberPicker extends StatelessWidget {
           max: max.toDouble(),
           divisions: (max - min),
           activeColor: Colors.black87,
-          inactiveColor: accent.withOpacity(.6),
+          inactiveColor: accent.withValues(alpha: 0.6),
           onChanged: (v) => onChanged(v.round()),
         ),
       ],
@@ -637,15 +736,16 @@ class _SliderWithMarks extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Column(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Text(label, style: const TextStyle(fontSize: 40, fontWeight: FontWeight.w800)),
+        Text(label, style: const TextStyle(fontSize: 40, fontWeight: FontWeight.w800, color: Colors.black)),
         Slider(
           value: value,
           min: min,
           max: max,
           divisions: (max - min).round(),
           activeColor: Colors.black87,
-          inactiveColor: accent.withOpacity(.6),
+          inactiveColor: accent.withValues(alpha: 0.6),
           onChanged: onChanged,
         ),
       ],
@@ -653,90 +753,6 @@ class _SliderWithMarks extends StatelessWidget {
   }
 }
 
-class _SingleChoice extends StatelessWidget {
-  final List<String> options;
-  final String? value;
-  final ValueChanged<String> onChanged;
-  const _SingleChoice({
-    required this.options,
-    required this.value,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        for (final o in options)
-          RadioListTile<String>(
-            value: o,
-            groupValue: value,
-            onChanged: (v) => onChanged(v!),
-            title: Text(o),
-          ),
-      ],
-    );
-  }
-}
-
-// chips que aceptan valor nullable
-class _SingleChoiceChipsNullable extends StatelessWidget {
-  final List<String> options;
-  final String? value;
-  final ValueChanged<String> onChanged;
-  final Color accent;
-  const _SingleChoiceChipsNullable({
-    required this.options,
-    required this.value,
-    required this.onChanged,
-    required this.accent,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 10,
-      children: [
-        for (final o in options)
-          ChoiceChip(
-            label: Text(o),
-            selected: value == o,
-            selectedColor: accent,
-            onSelected: (_) => onChanged(o),
-          ),
-      ],
-    );
-  }
-}
-
-class _SingleChoiceChips extends StatelessWidget {
-  final List<String> options;
-  final String value;
-  final ValueChanged<String> onChanged;
-  final Color accent;
-  const _SingleChoiceChips({
-    required this.options,
-    required this.value,
-    required this.onChanged,
-    required this.accent,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 10,
-      children: [
-        for (final o in options)
-          ChoiceChip(
-            label: Text(o),
-            selected: value == o,
-            selectedColor: accent,
-            onSelected: (_) => onChanged(o),
-          ),
-      ],
-    );
-  }
-}
 
 class _TextBox extends StatelessWidget {
   final TextEditingController controller;
