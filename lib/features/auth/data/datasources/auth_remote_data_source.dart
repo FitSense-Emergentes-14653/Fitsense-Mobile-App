@@ -252,7 +252,7 @@ class AuthRemoteDataSource extends BaseService {
   // Chatbot Session Management
   // ---------------------------
   Future<Map<String, dynamic>> startChatSession() async {
-    final url = 'http://localhost:8085/session/start';
+    final url = 'https://chatbox-ai-production-6ead.up.railway.app/session/start';
 
     try {
       final response = await http
@@ -279,7 +279,7 @@ class AuthRemoteDataSource extends BaseService {
     required String sessionId,
     required String message,
   }) async {
-    final url = 'http://localhost:8085/chat/send';
+    final url = 'https://chatbox-ai-production-6ead.up.railway.app/chat/send';
     final body = {
       'sessionId': sessionId,
       'message': message,
@@ -311,7 +311,7 @@ class AuthRemoteDataSource extends BaseService {
   }
 
   Future<bool> endChatSession(String sessionId) async {
-    final url = 'http://localhost:8085/session/end';
+    final url = 'https://chatbox-ai-production-6ead.up.railway.app/session/end';
     final body = {'sessionId': sessionId};
 
     try {

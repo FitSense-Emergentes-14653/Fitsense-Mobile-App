@@ -13,9 +13,8 @@ class AthleteChatbotScreen extends StatefulWidget {
 }
 
 class _AthleteChatbotScreenState extends State<AthleteChatbotScreen> {
-  /// URL base del chatbot - usa detección automática de plataforma
-  /// - Android Emulator: http://10.0.2.2:8085
-  /// - Web (Chrome): http://localhost:8085
+  /// URL base del chatbot en producción
+  /// Producción: https://chatbox-ai-production-6ead.up.railway.app
   String get _baseUrl => AppConfig.chatbotBaseUrl;
 
   final _scrollController = ScrollController();
