@@ -4,6 +4,7 @@ import 'package:fitsense/core/widgets/drawer/user_navbar.dart';
 import '../chatbot/athlete_chatbot_screen.dart';
 import '../settings/athlete_settings_screen.dart';
 import 'tabs/home_tab.dart';
+import 'tabs/metrics_tab.dart';
 import 'tabs/routines_tab.dart';
 import 'tabs/progress_tab.dart';
 
@@ -21,6 +22,7 @@ class _AthleteHomeScreenState extends State<AthleteHomeScreen> {
 
   List<Widget> get _screens => [
     HomeTab(userId: widget.userId),
+    MetricsTab(userId: widget.userId),
     RoutinesTab(userId: widget.userId),
     ProgressTab(userId: widget.userId),
   ];
@@ -92,7 +94,7 @@ class _AthleteHomeScreenState extends State<AthleteHomeScreen> {
                 child: UserNavbar(
                   selectedIndex: _index,
                   onTap: (index) {
-                    if (index == 3) {
+                    if (index == 4) {
                       // Configuración
                       Navigator.of(context).push(
                         PageRouteBuilder(

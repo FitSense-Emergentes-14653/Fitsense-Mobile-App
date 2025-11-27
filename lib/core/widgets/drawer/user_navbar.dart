@@ -42,33 +42,43 @@ class UserNavbar extends StatelessWidget {
                       isWide: isWide,
                     ),
                   ),
-                  SizedBox(width: isWide ? 24.0 : 12.0),
+                  SizedBox(width: isWide ? 16.0 : 8.0),
                   Expanded(
                     child: _RoundButton(
-                      assetPath: 'lib/assets/images/chat.png',
+                      icon: Icons.assessment_rounded,
                       label: ' ',
                       selected: selectedIndex == 1,
                       onTap: () => onTap?.call(1),
                       isWide: isWide,
                     ),
                   ),
-                  SizedBox(width: isWide ? 24.0 : 12.0),
+                  SizedBox(width: isWide ? 16.0 : 8.0),
                   Expanded(
                     child: _RoundButton(
-                      assetPath: 'lib/assets/images/stars.png',
+                      assetPath: 'lib/assets/images/chat.png',
                       label: ' ',
                       selected: selectedIndex == 2,
                       onTap: () => onTap?.call(2),
                       isWide: isWide,
                     ),
                   ),
-                  SizedBox(width: isWide ? 24.0 : 12.0),
+                  SizedBox(width: isWide ? 16.0 : 8.0),
+                  Expanded(
+                    child: _RoundButton(
+                      assetPath: 'lib/assets/images/stars.png',
+                      label: ' ',
+                      selected: selectedIndex == 3,
+                      onTap: () => onTap?.call(3),
+                      isWide: isWide,
+                    ),
+                  ),
+                  SizedBox(width: isWide ? 16.0 : 8.0),
                   Expanded(
                     child: _RoundButton(
                       assetPath: 'lib/assets/images/config.png',
                       label: ' ',
-                      selected: selectedIndex == 3,
-                      onTap: () => onTap?.call(3),
+                      selected: selectedIndex == 4,
+                      onTap: () => onTap?.call(4),
                       isWide: isWide,
                     ),
                   ),
@@ -83,19 +93,21 @@ class UserNavbar extends StatelessWidget {
 }
 
 class _RoundButton extends StatefulWidget {
-  final String assetPath;
+  final String? assetPath;
+  final IconData? icon;
   final String label;
   final bool selected;
   final VoidCallback? onTap;
   final bool isWide;
 
   const _RoundButton({
-    required this.assetPath,
+    this.assetPath,
+    this.icon,
     required this.label,
     required this.selected,
     this.onTap,
     this.isWide = false,
-  });
+  }) : assert(assetPath != null || icon != null, 'Either assetPath or icon must be provided');
 
   @override
   State<_RoundButton> createState() => _RoundButtonState();
@@ -131,7 +143,7 @@ class _RoundButtonState extends State<_RoundButton>
                 color: purple,
                 boxShadow: [
                   BoxShadow(
-                    color: purple.withOpacity(0.45),
+                    color: purple.withValues(alpha: 0.45),
                     blurRadius: 14,
                     spreadRadius: 2,
                     offset: const Offset(0, 5),
@@ -139,12 +151,18 @@ class _RoundButtonState extends State<_RoundButton>
                 ],
               ),
               child: Center(
-                child: Image.asset(
-                  widget.assetPath,
-                  width: 30,
-                  height: 30,
-                  color: Colors.white,
-                ),
+                child: widget.assetPath != null
+                    ? Image.asset(
+                        widget.assetPath!,
+                        width: 30,
+                        height: 30,
+                        color: Colors.white,
+                      )
+                    : Icon(
+                        widget.icon!,
+                        size: 30,
+                        color: Colors.white,
+                      ),
               ),
             ),
           ),
@@ -154,7 +172,7 @@ class _RoundButtonState extends State<_RoundButton>
           widget.label,
           style: TextStyle(
             fontSize: 12,
-            color: widget.selected ? purple : Colors.black.withOpacity(0.55),
+            color: widget.selected ? purple : Colors.black.withValues(alpha: 0.55),
             fontWeight: widget.selected ? FontWeight.w700 : FontWeight.w500,
           ),
         ),
