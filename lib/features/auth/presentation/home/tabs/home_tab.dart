@@ -4,6 +4,8 @@ import 'package:fitsense/features/auth/data/datasources/athlete_remote_data_sour
 import 'package:fitsense/features/auth/domain/repositories/athlete_repository.dart';
 import 'package:fitsense/features/auth/data/models/athlete_model.dart';
 
+import '../../notifications/notifications_page.dart';
+
 class HomeTab extends StatefulWidget {
   final int userId;
 
@@ -44,8 +46,6 @@ class _HomeTabState extends State<HomeTab> {
           });
         }
       } else {
-        // No hay athleteId en sesión - esto podría pasar si el usuario
-        // acaba de registrarse y el ID no se guardó correctamente
         print('⚠️ [HomeTab] No hay athleteId en sesión');
 
         if (mounted) {
@@ -54,7 +54,6 @@ class _HomeTabState extends State<HomeTab> {
             _athlete = null;
           });
 
-          // Mostrar mensaje informativo
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('Por favor, completa tu perfil de atleta primero.'),
@@ -84,80 +83,106 @@ class _HomeTabState extends State<HomeTab> {
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) {
-      return const Center(
-        child: CircularProgressIndicator(color: Colors.yellow),
-      );
-    }
+    return Scaffold(
+      backgroundColor: const Color(0xFF0D0D0D),
 
-    if (_athlete == null) {
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(
-                Icons.person_off_outlined,
-                size: 80,
-                color: Colors.white24,
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'No se encontró tu perfil',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 20,
-                  fontWeight: FontWeight.w700,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Por favor, completa tu configuración de atleta.',
-                style: TextStyle(color: Colors.white70),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              ElevatedButton.icon(
-                onPressed: _loadAthleteData,
-                icon: const Icon(Icons.refresh),
-                label: const Text('Reintentar'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFFCCF24D),
-                  foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 24,
-                    vertical: 12,
-                  ),
-                ),
-              ),
-            ],
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: const Text(
+          "FitSense",
+          style: TextStyle(
+            color: Color(0xFFB8B4FF),
+            fontWeight: FontWeight.bold,
           ),
         ),
-      );
-    }
+        actions: [
+          IconButton(
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const NotificationsPage()),
+              );
+            },
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Header con bienvenida
-          _buildWelcomeCard(),
-          const SizedBox(height: 20),
-
-          // Estadísticas rápidas
-          _buildQuickStats(),
-          const SizedBox(height: 20),
-
-          // Entrenamiento de hoy
-          _buildTodayWorkout(),
-          const SizedBox(height: 20),
-
-          // Progreso semanal
-          _buildWeeklyProgress(),
+            icon: const Icon(
+              Icons.notifications_none,
+              color: Color(0xFFB8B4FF),
+              size: 28,
+            ),
+          ),
+          const SizedBox(width: 12),
         ],
+      ),
+
+      body: _loading
+          ? const Center(
+        child: CircularProgressIndicator(color: Colors.yellow),
+      )
+          : _athlete == null
+          ? _buildEmptyState()
+          : SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _buildWelcomeCard(),
+            const SizedBox(height: 20),
+            _buildQuickStats(),
+            const SizedBox(height: 20),
+            _buildTodayWorkout(),
+            const SizedBox(height: 20),
+            _buildWeeklyProgress(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.person_off_outlined,
+              size: 80,
+              color: Colors.white24,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'No se encontró tu perfil',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Por favor, completa tu configuración de atleta.',
+              style: TextStyle(color: Colors.white70),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 24),
+            ElevatedButton.icon(
+              onPressed: _loadAthleteData,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Reintentar'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFCCF24D),
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -263,7 +288,6 @@ class _HomeTabState extends State<HomeTab> {
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: () {
-                // TODO: Navegar a crear rutina
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(content: Text('Funcionalidad próximamente')),
                 );
@@ -394,4 +418,3 @@ class _StatCard extends StatelessWidget {
     );
   }
 }
-
