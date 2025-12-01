@@ -8,17 +8,25 @@ class AppConfig {
   /// Para Android emulator: http://10.0.2.2:8080/api/v1
   /// Para Web/iOS: http://localhost:8080/api/v1
   static String get apiBaseUrl {
+    String url;
     if (kIsWeb) {
-      return 'http://localhost:8080/api/v1';
-    }
-    try {
-      if (Platform.isAndroid) {
-        return 'http://10.0.2.2:8080/api/v1';
+      url = 'http://localhost:8080/api/v1';
+      print('🌐 [APP CONFIG] Plataforma: Web | API URL: $url');
+    } else {
+      try {
+        if (Platform.isAndroid) {
+          url = 'http://10.0.2.2:8080/api/v1';
+          print('🤖 [APP CONFIG] Plataforma: Android | API URL: $url');
+        } else {
+          url = 'http://localhost:8080/api/v1';
+          print('📱 [APP CONFIG] Plataforma: ${Platform.operatingSystem} | API URL: $url');
+        }
+      } catch (e) {
+        url = 'http://localhost:8080/api/v1';
+        print('⚠️ [APP CONFIG] Error detectando plataforma | API URL: $url');
       }
-      return 'http://localhost:8080/api/v1';
-    } catch (e) {
-      return 'http://localhost:8080/api/v1';
     }
+    return url;
   }
 
   /// URL base del chatbot (Operaciones del chatbot)

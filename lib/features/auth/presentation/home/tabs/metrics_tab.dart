@@ -28,29 +28,48 @@ class _MetricsTabState extends State<MetricsTab> {
   }
 
   Future<void> _loadData() async {
+    print('📊 [METRICS TAB] Iniciando carga de datos...');
+    print('📊 [METRICS TAB] User ID: ${widget.userId}');
     setState(() => _loading = true);
 
+    print('📊 [METRICS TAB] Solicitando datos de hidratación...');
     final water = await _waterService.getTodayWaterIntake(widget.userId);
+    print('📊 [METRICS TAB] Datos de hidratación recibidos: ${water != null ? "✓" : "✗"}');
+    if (water != null) {
+      print('📊 [METRICS TAB] Vasos consumidos: ${water.glasses} / ${water.goalGlasses}');
+    }
+
+    print('📊 [METRICS TAB] Solicitando datos de calorías...');
     final calories = await _mealService.getDailySummary(widget.userId);
+    print('📊 [METRICS TAB] Datos de calorías recibidos: ${calories != null ? "✓" : "✗"}');
 
     setState(() {
       _waterIntake = water;
       _caloriesSummary = calories;
       _loading = false;
     });
+    print('📊 [METRICS TAB] Carga de datos completada');
   }
 
   Future<void> _incrementWater() async {
+    print('➕ [METRICS TAB] Incrementando agua (+ 1 vaso = +250ml)');
     final updated = await _waterService.incrementWaterIntake(widget.userId);
     if (updated != null) {
+      print('➕ [METRICS TAB] Agua incrementada exitosamente: ${updated.glasses} / ${updated.goalGlasses}');
       setState(() => _waterIntake = updated);
+    } else {
+      print('❌ [METRICS TAB] Error al incrementar agua');
     }
   }
 
   Future<void> _decrementWater() async {
+    print('➖ [METRICS TAB] Decrementando agua (- 1 vaso = -250ml)');
     final updated = await _waterService.decrementWaterIntake(widget.userId);
     if (updated != null) {
+      print('➖ [METRICS TAB] Agua decrementada exitosamente: ${updated.glasses} / ${updated.goalGlasses}');
       setState(() => _waterIntake = updated);
+    } else {
+      print('❌ [METRICS TAB] Error al decrementar agua');
     }
   }
 
@@ -150,6 +169,10 @@ class _MetricsTabState extends State<MetricsTab> {
                   ),
                 ),
               ),
+              IconButton(
+                onPressed: _showEditGoalDialog,
+                icon: const Icon(Icons.edit, color: Colors.white70, size: 20),
+              ),
             ],
           ),
           const SizedBox(height: 24),
@@ -159,7 +182,7 @@ class _MetricsTabState extends State<MetricsTab> {
             child: LinearProgressIndicator(
               value: progress,
               minHeight: 20,
-              backgroundColor: Colors.white.withValues(alpha: 0.1),
+              backgroundColor: Colors.white.withOpacity(0.1),
               valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFF4FC3F7)),
             ),
           ),
@@ -197,7 +220,7 @@ class _MetricsTabState extends State<MetricsTab> {
                     icon: const Icon(Icons.remove_circle_outline),
                     color: Colors.white,
                     iconSize: 40,
-                    disabledColor: Colors.white.withValues(alpha: 0.3),
+                    disabledColor: Colors.white.withOpacity(0.3),
                   ),
                   const SizedBox(width: 8),
                   IconButton(
@@ -212,6 +235,74 @@ class _MetricsTabState extends State<MetricsTab> {
           ),
         ],
       ),
+    );
+  }
+
+  Future<void> _updateGoal(int newGoal) async {
+    final updated = await _waterService.updateGoal(widget.userId, newGoal);
+    if (updated != null) {
+      setState(() => _waterIntake = updated);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Meta de hidratación actualizada.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error al actualizar la meta.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _showEditGoalDialog() {
+    final goalController = TextEditingController(text: _waterIntake?.goalGlasses.toString() ?? '8');
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF1E1E1E),
+          title: const Text('Editar Meta de Hidratación', style: TextStyle(color: Colors.white)),
+          content: TextField(
+            controller: goalController,
+            keyboardType: TextInputType.number,
+            style: const TextStyle(color: Colors.white),
+            decoration: const InputDecoration(
+              labelText: 'Vasos diarios',
+              labelStyle: TextStyle(color: Colors.white70),
+              enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Colors.white38),
+              ),
+              focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: Color(0xFF8A5CF6)),
+              ),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancelar', style: TextStyle(color: Colors.white70)),
+            ),
+            TextButton(
+              onPressed: () {
+                final newGoal = int.tryParse(goalController.text);
+                if (newGoal != null && newGoal > 0) {
+                  _updateGoal(newGoal);
+                  Navigator.of(context).pop();
+                }
+              },
+              child: const Text('Guardar', style: TextStyle(color: Color(0xFF8A5CF6))),
+            ),
+          ],
+        );
+      },
     );
   }
 
