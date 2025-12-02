@@ -3,6 +3,7 @@ import 'package:fitsense/features/auth/data/services/water_intake_service.dart';
 import 'package:fitsense/features/auth/data/services/meal_service.dart';
 import 'package:fitsense/features/auth/domain/models/water_intake_model.dart';
 import 'package:fitsense/features/auth/domain/models/meal_model.dart';
+import 'package:fitsense/infrastructure/services/session_service.dart';
 
 class MetricsTab extends StatefulWidget {
   final int userId;
@@ -16,31 +17,64 @@ class MetricsTab extends StatefulWidget {
 class _MetricsTabState extends State<MetricsTab> {
   final WaterIntakeService _waterService = WaterIntakeService();
   final MealService _mealService = MealService();
+  final SessionService _session = SessionService();
 
   WaterIntakeModel? _waterIntake;
   DailyCaloriesSummary? _caloriesSummary;
   bool _loading = true;
+  bool _waterLoading = false;
+  int? _athleteId; // ID del atleta desde la sesión
 
   @override
   void initState() {
     super.initState();
-    _loadData();
+    _initSession();
+  }
+
+  Future<void> _initSession() async {
+    await _session.init();
+    _athleteId = _session.getAthleteId();
+
+    print('📊 [METRICS TAB] ========== INICIALIZACIÓN ==========');
+    print('📊 [METRICS TAB] User ID (parámetro): ${widget.userId}');
+    print('📊 [METRICS TAB] Athlete ID (sesión): $_athleteId');
+    print('📊 [METRICS TAB] ==========================================');
+
+    if (_athleteId != null && _athleteId! > 0) {
+      _loadData();
+    } else {
+      print('❌ [METRICS TAB] No se pudo obtener athleteId de la sesión');
+      setState(() => _loading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Error: No se pudo cargar el perfil del atleta'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _loadData() async {
+    if (_athleteId == null || _athleteId! <= 0) {
+      print('❌ [METRICS TAB] athleteId no válido: $_athleteId');
+      return;
+    }
+
     print('📊 [METRICS TAB] Iniciando carga de datos...');
-    print('📊 [METRICS TAB] User ID: ${widget.userId}');
+    print('📊 [METRICS TAB] Athlete ID: $_athleteId');
     setState(() => _loading = true);
 
     print('📊 [METRICS TAB] Solicitando datos de hidratación...');
-    final water = await _waterService.getTodayWaterIntake(widget.userId);
+    final water = await _waterService.getTodayWaterIntake(_athleteId!);
     print('📊 [METRICS TAB] Datos de hidratación recibidos: ${water != null ? "✓" : "✗"}');
     if (water != null) {
       print('📊 [METRICS TAB] Vasos consumidos: ${water.glasses} / ${water.goalGlasses}');
     }
 
     print('📊 [METRICS TAB] Solicitando datos de calorías...');
-    final calories = await _mealService.getDailySummary(widget.userId);
+    final calories = await _mealService.getDailySummary(_athleteId!);
     print('📊 [METRICS TAB] Datos de calorías recibidos: ${calories != null ? "✓" : "✗"}');
 
     setState(() {
@@ -52,25 +86,107 @@ class _MetricsTabState extends State<MetricsTab> {
   }
 
   Future<void> _incrementWater() async {
-    print('➕ [METRICS TAB] Incrementando agua (+ 1 vaso = +250ml)');
-    final updated = await _waterService.incrementWaterIntake(widget.userId);
+    if (_athleteId == null || _athleteId! <= 0) {
+      print('❌ [METRICS TAB] No se puede incrementar: athleteId no válido');
+      return;
+    }
+
+    if (_waterLoading) {
+      print('⏳ [METRICS TAB] Ya hay una operación en progreso, ignorando...');
+      return;
+    }
+
+    setState(() => _waterLoading = true);
+
+    print('➕ [METRICS TAB] ========== INCREMENTAR AGUA ==========');
+    print('➕ [METRICS TAB] Athlete ID: $_athleteId');
+    print('➕ [METRICS TAB] Estado actual: ${_waterIntake?.glasses} / ${_waterIntake?.goalGlasses}');
+
+    final updated = await _waterService.incrementWaterIntake(_athleteId!);
+
+    setState(() => _waterLoading = false);
+
+    print('➕ [METRICS TAB] Respuesta del servicio: ${updated != null ? "✓ Exitoso" : "✗ Error"}');
+
     if (updated != null) {
-      print('➕ [METRICS TAB] Agua incrementada exitosamente: ${updated.glasses} / ${updated.goalGlasses}');
+      print('➕ [METRICS TAB] Nuevo estado: ${updated.glasses} / ${updated.goalGlasses}');
       setState(() => _waterIntake = updated);
+      print('➕ [METRICS TAB] UI actualizada');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✓ Agua agregada: ${updated.glasses} / ${updated.goalGlasses} vasos'),
+            backgroundColor: Colors.green,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
     } else {
       print('❌ [METRICS TAB] Error al incrementar agua');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('❌ Error al agregar agua. Intenta de nuevo.'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
     }
+    print('➕ [METRICS TAB] ========================================');
   }
 
   Future<void> _decrementWater() async {
-    print('➖ [METRICS TAB] Decrementando agua (- 1 vaso = -250ml)');
-    final updated = await _waterService.decrementWaterIntake(widget.userId);
+    if (_athleteId == null || _athleteId! <= 0) {
+      print('❌ [METRICS TAB] No se puede decrementar: athleteId no válido');
+      return;
+    }
+
+    if (_waterLoading) {
+      print('⏳ [METRICS TAB] Ya hay una operación en progreso, ignorando...');
+      return;
+    }
+
+    setState(() => _waterLoading = true);
+
+    print('➖ [METRICS TAB] ========== DECREMENTAR AGUA ==========');
+    print('➖ [METRICS TAB] Athlete ID: $_athleteId');
+    print('➖ [METRICS TAB] Estado actual: ${_waterIntake?.glasses} / ${_waterIntake?.goalGlasses}');
+
+    final updated = await _waterService.decrementWaterIntake(_athleteId!);
+
+    setState(() => _waterLoading = false);
+
+    print('➖ [METRICS TAB] Respuesta del servicio: ${updated != null ? "✓ Exitoso" : "✗ Error"}');
+
     if (updated != null) {
-      print('➖ [METRICS TAB] Agua decrementada exitosamente: ${updated.glasses} / ${updated.goalGlasses}');
+      print('➖ [METRICS TAB] Nuevo estado: ${updated.glasses} / ${updated.goalGlasses}');
       setState(() => _waterIntake = updated);
+      print('➖ [METRICS TAB] UI actualizada');
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('✓ Agua reducida: ${updated.glasses} / ${updated.goalGlasses} vasos'),
+            backgroundColor: Colors.orange,
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
     } else {
       print('❌ [METRICS TAB] Error al decrementar agua');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('❌ Error al reducir agua. Intenta de nuevo.'),
+            backgroundColor: Colors.red,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
     }
+    print('➖ [METRICS TAB] ========================================');
   }
 
   @override
@@ -239,7 +355,12 @@ class _MetricsTabState extends State<MetricsTab> {
   }
 
   Future<void> _updateGoal(int newGoal) async {
-    final updated = await _waterService.updateGoal(widget.userId, newGoal);
+    if (_athleteId == null || _athleteId! <= 0) {
+      print('❌ [METRICS TAB] No se puede actualizar meta: athleteId no válido');
+      return;
+    }
+
+    final updated = await _waterService.updateGoal(_athleteId!, newGoal);
     if (updated != null) {
       setState(() => _waterIntake = updated);
       if (mounted) {
