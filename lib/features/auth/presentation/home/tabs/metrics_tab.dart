@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:fitsense/features/auth/data/services/water_intake_service.dart';
 import 'package:fitsense/features/auth/data/services/meal_service.dart';
+import 'package:fitsense/features/auth/data/services/exercise_summary_service.dart';
 import 'package:fitsense/features/auth/domain/models/water_intake_model.dart';
 import 'package:fitsense/features/auth/domain/models/meal_model.dart';
+import 'package:fitsense/features/auth/domain/models/exercise_summary_model.dart';
 import 'package:fitsense/infrastructure/services/session_service.dart';
 
 class MetricsTab extends StatefulWidget {
@@ -17,13 +19,16 @@ class MetricsTab extends StatefulWidget {
 class _MetricsTabState extends State<MetricsTab> {
   final WaterIntakeService _waterService = WaterIntakeService();
   final MealService _mealService = MealService();
+  final ExerciseSummaryService _exerciseService = ExerciseSummaryService();
   final SessionService _session = SessionService();
 
   WaterIntakeModel? _waterIntake;
   DailyCaloriesSummary? _caloriesSummary;
+  ExerciseSummaryModel? _exerciseSummary;
   bool _loading = true;
   bool _waterLoading = false;
   int? _athleteId; // ID del atleta desde la sesión
+  int? _routineId; // ID de la rutina actual
 
   @override
   void initState() {
@@ -77,9 +82,33 @@ class _MetricsTabState extends State<MetricsTab> {
     final calories = await _mealService.getDailySummary(_athleteId!);
     print('📊 [METRICS TAB] Datos de calorías recibidos: ${calories != null ? "✓" : "✗"}');
 
+    // Obtener resumen de ejercicios (calorías quemadas)
+    print('📊 [METRICS TAB] Solicitando resumen de ejercicios...');
+    ExerciseSummaryModel? exerciseSummary;
+
+    // Primero obtener el routineId si no lo tenemos
+    if (_routineId == null) {
+      print('📊 [METRICS TAB] Obteniendo último routineId...');
+      _routineId = await _exerciseService.getLatestRoutineId(widget.userId);
+      print('📊 [METRICS TAB] Routine ID obtenido: $_routineId');
+    }
+
+    // Luego obtener el resumen si tenemos routineId
+    if (_routineId != null) {
+      exerciseSummary = await _exerciseService.getExerciseSummary(widget.userId, _routineId!);
+      print('📊 [METRICS TAB] Resumen de ejercicios recibido: ${exerciseSummary != null ? "✓" : "✗"}');
+      if (exerciseSummary != null) {
+        print('📊 [METRICS TAB] Calorías quemadas: ${exerciseSummary.totalCaloriesBurned}');
+        print('📊 [METRICS TAB] Ejercicios completados: ${exerciseSummary.exercisesCompleted}');
+      }
+    } else {
+      print('⚠️ [METRICS TAB] No se pudo obtener routineId, no hay resumen de ejercicios');
+    }
+
     setState(() {
       _waterIntake = water;
       _caloriesSummary = calories;
+      _exerciseSummary = exerciseSummary;
       _loading = false;
     });
     print('📊 [METRICS TAB] Carga de datos completada');
@@ -428,15 +457,18 @@ class _MetricsTabState extends State<MetricsTab> {
   }
 
   Widget _buildCaloriesCard() {
-    final summary = _caloriesSummary;
-    if (summary == null) {
-      return const SizedBox();
-    }
+    // Si tenemos resumen de ejercicios, mostrarlo
+    final exerciseSummary = _exerciseSummary;
 
-    final progress = summary.progress.clamp(0.0, 1.0);
-    final progressColor = progress > 1.0
-        ? Colors.red
-        : progress > 0.8
+    // Meta de calorías quemadas por día (puedes ajustar esto)
+    const goalCalories = 500; // Meta diaria de calorías a quemar
+    final burnedCalories = exerciseSummary?.totalCaloriesBurned ?? 0;
+    final exercisesCompleted = exerciseSummary?.exercisesCompleted ?? 0;
+
+    final progress = goalCalories > 0 ? (burnedCalories / goalCalories).clamp(0.0, 1.0) : 0.0;
+    final progressColor = progress >= 1.0
+        ? Colors.green
+        : progress >= 0.7
             ? Colors.orange
             : const Color(0xFF8A5CF6);
 
@@ -519,7 +551,7 @@ class _MetricsTabState extends State<MetricsTab> {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        '${summary.totalCalories}',
+                        '$burnedCalories',
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 48,
@@ -527,10 +559,18 @@ class _MetricsTabState extends State<MetricsTab> {
                         ),
                       ),
                       Text(
-                        'de ${summary.goalCalories} kcal',
+                        'de $goalCalories kcal',
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.7),
                           fontSize: 16,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'quemadas',
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.5),
+                          fontSize: 14,
                         ),
                       ),
                     ],
@@ -542,12 +582,22 @@ class _MetricsTabState extends State<MetricsTab> {
 
           const SizedBox(height: 32),
 
+          // Información de ejercicios
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildMacroItem('Proteína', summary.totalProtein, Colors.red),
-              _buildMacroItem('Carbos', summary.totalCarbs, Colors.orange),
-              _buildMacroItem('Grasas', summary.totalFats, Colors.yellow),
+              _buildExerciseStatItem(
+                'Ejercicios',
+                '$exercisesCompleted',
+                Icons.fitness_center,
+                const Color(0xFF8A5CF6),
+              ),
+              _buildExerciseStatItem(
+                'Progreso',
+                '${(progress * 100).toInt()}%',
+                Icons.trending_up,
+                progressColor,
+              ),
             ],
           ),
 
@@ -557,62 +607,85 @@ class _MetricsTabState extends State<MetricsTab> {
 
           const SizedBox(height: 16),
 
-          const Text(
-            'Comidas de hoy',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
+          // Última actualización
+          if (exerciseSummary != null) ...[
+            Row(
+              children: [
+                Icon(
+                  Icons.schedule,
+                  color: Colors.white.withValues(alpha: 0.5),
+                  size: 16,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Última actualización: ${_formatLastUpdated(exerciseSummary.lastUpdated)}',
+                  style: TextStyle(
+                    color: Colors.white.withValues(alpha: 0.5),
+                    fontSize: 14,
+                  ),
+                ),
+              ],
             ),
-          ),
-          const SizedBox(height: 16),
-
-          if (summary.meals.isEmpty)
+          ] else ...[
             Center(
               child: Padding(
                 padding: const EdgeInsets.all(32),
                 child: Column(
                   children: [
                     Icon(
-                      Icons.restaurant_menu,
+                      Icons.fitness_center,
                       color: Colors.white.withValues(alpha: 0.3),
                       size: 48,
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'No has registrado comidas hoy',
+                      'No hay datos de ejercicios',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.5),
                         fontSize: 16,
                       ),
                     ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Completa ejercicios para ver tu progreso',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.4),
+                        fontSize: 14,
+                      ),
+                    ),
                   ],
                 ),
               ),
-            )
-          else
-            ...summary.meals.map((meal) => _buildMealItem(meal)),
+            ),
+          ],
         ],
       ),
     );
   }
 
-  Widget _buildMacroItem(String label, double value, Color color) {
+  Widget _buildExerciseStatItem(String label, String value, IconData icon, Color color) {
     return Column(
       children: [
         Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: color.withValues(alpha: 0.2),
             borderRadius: BorderRadius.circular(12),
           ),
-          child: Text(
-            '${value.toStringAsFixed(1)}g',
-            style: TextStyle(
-              color: color,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+          child: Column(
+            children: [
+              Icon(icon, color: color, size: 32),
+              const SizedBox(height: 8),
+              Text(
+                value,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
         ),
         const SizedBox(height: 8),
@@ -625,6 +698,21 @@ class _MetricsTabState extends State<MetricsTab> {
         ),
       ],
     );
+  }
+
+  String _formatLastUpdated(DateTime dateTime) {
+    final now = DateTime.now();
+    final difference = now.difference(dateTime);
+
+    if (difference.inMinutes < 1) {
+      return 'Ahora mismo';
+    } else if (difference.inMinutes < 60) {
+      return 'Hace ${difference.inMinutes} min';
+    } else if (difference.inHours < 24) {
+      return 'Hace ${difference.inHours}h';
+    } else {
+      return 'Hace ${difference.inDays}d';
+    }
   }
 
   Widget _buildMealItem(MealModel meal) {
