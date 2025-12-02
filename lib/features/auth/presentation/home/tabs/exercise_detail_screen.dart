@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:fitsense/infrastructure/config/app_config.dart';
 
+import '../../notifications/local_notifications_service.dart';
 import 'exercise_completed_screen.dart';
 
 class ExerciseDetailScreen extends StatefulWidget {
@@ -54,6 +56,51 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
     });
   }
 
+  Future<void> checkAchievements() async {
+    final url = Uri.parse(
+      "${AppConfig.apiBaseUrl}/achievements/check/U${widget.userId}",
+    );
+
+    try {
+      await http.post(
+        url,
+        headers: {
+          "Authorization": "Bearer ${widget.authToken}",
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+        },
+        body: "{}",
+      );
+    } catch (e) {
+      debugPrint("Error al verificar logros: $e");
+    }
+  }
+
+  Future<void> sendNotification() async {
+    final url = Uri.parse(
+      "${AppConfig.apiBaseUrl}/notifications",
+    );
+
+    try {
+      await http.post(
+        url,
+        headers: {
+          "Authorization": "Bearer ${widget.authToken}",
+          "Accept": "application/json",
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({
+          "title": "Ejercicio completado",
+          "body": "El usuario completó ${widget.exercise["name"]}",
+          "type": "SYSTEM"
+        }),
+      );
+    } catch (e) {
+      debugPrint("Error al enviar notificación: $e");
+    }
+  }
+
+
   Future<void> completeExercise() async {
     setState(() => isLoading = true);
 
@@ -76,12 +123,23 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
       setState(() => isLoading = false);
 
       if (response.statusCode == 200) {
+
+        unawaited(checkAchievements());
+
+        unawaited(sendNotification());
+
+        LocalNotificationService.showNotification(
+          title: "Ejercicio completado",
+          body: "Completaste ${widget.exercise["name"]}",
+        );
+
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (_) => const ExerciseCompletedScreen(),
           ),
         );
+
         return;
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -102,8 +160,6 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
       );
     }
   }
-
-
 
   @override
   Widget build(BuildContext context) {

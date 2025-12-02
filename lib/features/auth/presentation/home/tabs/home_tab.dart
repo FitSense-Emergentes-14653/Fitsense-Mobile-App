@@ -101,10 +101,14 @@ class _HomeTabState extends State<HomeTab> {
             onPressed: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(builder: (context) => const NotificationsPage()),
+                MaterialPageRoute(
+                  builder: (context) => NotificationsPage(
+                    userId: widget.userId,
+                    authToken: _session.getToken(),
+                  ),
+                ),
               );
             },
-
             icon: const Icon(
               Icons.notifications_none,
               color: Color(0xFFB8B4FF),

@@ -7,6 +7,9 @@ import 'package:fitsense/features/auth/domain/models/meal_model.dart';
 import 'package:fitsense/features/auth/domain/models/exercise_summary_model.dart';
 import 'package:fitsense/infrastructure/services/session_service.dart';
 
+import '../../notifications/local_notifications_service.dart';
+import '../../notifications/notifications_api_service.dart';
+
 class MetricsTab extends StatefulWidget {
   final int userId;
 
@@ -139,7 +142,13 @@ class _MetricsTabState extends State<MetricsTab> {
 
     if (updated != null) {
       print('➕ [METRICS TAB] Nuevo estado: ${updated.glasses} / ${updated.goalGlasses}');
+
+      final reachedGoal =
+          updated.glasses >= updated.goalGlasses &&
+              (_waterIntake?.glasses ?? 0) < updated.goalGlasses; // evita duplicados
+
       setState(() => _waterIntake = updated);
+
       print('➕ [METRICS TAB] UI actualizada');
 
       if (mounted) {
@@ -151,7 +160,34 @@ class _MetricsTabState extends State<MetricsTab> {
           ),
         );
       }
-    } else {
+
+      if (reachedGoal) {
+        print('🎉 [METRICS TAB] META DE AGUA ALCANZADA → notificando...');
+
+        LocalNotificationService.showNotification(
+          title: "Meta diaria alcanzada 💧",
+          body: "¡Felicidades! Completaste tu meta de hidratación de hoy.",
+        );
+
+        final token = _session.getToken();
+
+        NotificationApiService.sendNotification(
+          token: token,
+          title: "Meta de hidratación alcanzada",
+          body: "El usuario completó su meta diaria de hidratación.",
+          type: "SYSTEM",
+        );
+
+        NotificationApiService.sendNotification(
+          token: token,
+          title: "Recordatorio completado 💧",
+          body: "Has cumplido tu objetivo del día. ¡Sigue así!",
+          type: "REMINDER",
+        );
+      }
+
+    }
+    else {
       print('❌ [METRICS TAB] Error al incrementar agua');
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(

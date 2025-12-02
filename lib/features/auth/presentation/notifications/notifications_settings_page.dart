@@ -14,7 +14,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
   bool general = true;
   bool sound = true;
   bool dnd = false;
-  bool vibrate = true;    // → ahora solo visual
+  bool vibrate = true;
   bool lockscreen = true;
   bool reminders = true;
 
@@ -55,7 +55,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
       title: "FitSense",
       body: "Notificaciones actualizadas",
       sound: sound,
-      vibrate: vibrate,      // → se ignora en handler (no vibra)
+      vibrate: vibrate,
       lockscreen: lockscreen,
     );
   }
@@ -94,7 +94,6 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
             _saveSettings();
           }),
 
-          // ⚠ Vibrate ahora solo es visual — no usa ningún plugin ni vibra realmente
           _switchTile("Vibrate", vibrate, (v) {
             setState(() => vibrate = v);
             _saveSettings();

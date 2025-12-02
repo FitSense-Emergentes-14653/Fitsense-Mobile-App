@@ -48,7 +48,6 @@ class _AthleteHomeScreenState extends State<AthleteHomeScreen> {
 
           return Stack(
             children: [
-              // Contenido principal
               Positioned.fill(
                 child: Center(
                   child: Container(
@@ -65,7 +64,6 @@ class _AthleteHomeScreenState extends State<AthleteHomeScreen> {
                   ),
                 ),
               ),
-              // Botón de chat
               SafeArea(
                 minimum: EdgeInsets.only(
                   right: isWide ? 32.0 : 20.0,
