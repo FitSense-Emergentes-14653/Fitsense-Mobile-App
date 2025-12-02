@@ -50,7 +50,7 @@ class _RoutinesTabState extends State<RoutinesTab> {
       }
 
       final url = Uri.parse(
-        "http://10.0.2.2:8080/api/v1/challenges/user/${widget.userId}",
+        "${AppConfig.apiBaseUrl}/challenges/user/${widget.userId}",
       );
 
       print("📡 [RoutinesTab] GET → $url");
@@ -92,7 +92,7 @@ class _RoutinesTabState extends State<RoutinesTab> {
     final token = _session.getToken();
 
     final url = Uri.parse(
-      "http://10.0.2.2:8080/api/v1/challenges/user/${widget.userId}/latest",
+      "${AppConfig.apiBaseUrl}/challenges/user/${widget.userId}/latest",
     );
 
     print("📡 [RoutinesTab] GET latest → $url");

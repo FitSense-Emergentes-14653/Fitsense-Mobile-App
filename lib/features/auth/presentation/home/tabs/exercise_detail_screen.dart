@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
+import 'package:fitsense/infrastructure/config/app_config.dart';
 
 import 'exercise_completed_screen.dart';
 
@@ -57,7 +58,7 @@ class _ExerciseDetailScreenState extends State<ExerciseDetailScreen> {
     setState(() => isLoading = true);
 
     final url = Uri.parse(
-      "http://10.0.2.2:8080/api/v1/challenges/complete"
+      "${AppConfig.apiBaseUrl}/challenges/complete"
           "?userId=${widget.userId}"
           "&routineId=${widget.routineId}"
           "&exerciseName=${widget.exercise["name"]}",
