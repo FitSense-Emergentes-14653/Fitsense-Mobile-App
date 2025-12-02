@@ -1,4 +1,12 @@
+import 'dart:convert';
+import 'package:fitsense/features/auth/presentation/home/tabs/routine_day_screen.dart';
 import 'package:flutter/material.dart';
+import 'package:http/http.dart' as http;
+import 'package:fitsense/infrastructure/services/session_service.dart';
+import 'package:fitsense/infrastructure/config/app_config.dart';
+import 'package:fitsense/features/auth/data/datasources/athlete_remote_data_source.dart';
+import 'package:fitsense/features/auth/domain/repositories/athlete_repository.dart';
+import 'package:fitsense/features/auth/data/models/athlete_model.dart';
 
 class RoutinesTab extends StatefulWidget {
   final int userId;
@@ -10,47 +18,194 @@ class RoutinesTab extends StatefulWidget {
 }
 
 class _RoutinesTabState extends State<RoutinesTab> {
-  // TODO: Cargar rutinas desde API
-  final List<Map<String, dynamic>> _routines = [
-    {
-      'name': 'Rutina de Fuerza',
-      'exercises': 12,
-      'duration': 45,
-      'difficulty': 'Intermedio',
-      'icon': Icons.fitness_center,
-      'color': const Color(0xFFC8B8FF),
-    },
-    {
-      'name': 'Cardio Intenso',
-      'exercises': 8,
-      'duration': 30,
-      'difficulty': 'Avanzado',
-      'icon': Icons.directions_run,
-      'color': const Color(0xFFCCF24D),
-    },
-    {
-      'name': 'Yoga & Estiramiento',
-      'exercises': 15,
-      'duration': 60,
-      'difficulty': 'Principiante',
-      'icon': Icons.self_improvement,
-      'color': const Color(0xFFC8B8FF),
-    },
-  ];
+  final _session = SessionService();
+  final _athleteRepo = AthleteRepository(AthleteRemoteDataSource());
+  int? _lastRoutineId;
+
+  bool _loading = true;
+  AthleteModel? _athlete;
+
+  Map<int, List<_RoutineDay>> _groupedDays = {};
+
+  @override
+  void initState() {
+    super.initState();
+    _loadData();
+  }
+
+  Future<void> _loadData() async {
+    try {
+      await _session.init();
+      await _fetchLatestRoutineId();
+      final token = _session.getToken();
+      final athleteId = _session.getAthleteId();
+
+
+      print("🧪 [RoutinesTab] userId recibido: ${widget.userId}");
+      print("🧪 [RoutinesTab] athleteId de sesión: $athleteId");
+
+      if (athleteId > 0) {
+        _athlete = await _athleteRepo.getById(athleteId);
+        print("🏋 [RoutinesTab] Atleta cargado: ${_athlete?.fullname}");
+      }
+
+      final url = Uri.parse(
+        "http://10.0.2.2:8080/api/v1/challenges/user/${widget.userId}",
+      );
+
+      print("📡 [RoutinesTab] GET → $url");
+
+      final res = await http.get(
+        url,
+        headers: {
+          "Authorization": "Bearer $token",
+          "Content-Type": "application/json",
+        },
+      );
+
+      print("📥 [RoutinesTab] Status: ${res.statusCode}");
+      print("📥 [RoutinesTab] Body: ${res.body}");
+
+      if (res.statusCode == 200) {
+        final List<dynamic> jsonList = jsonDecode(res.body);
+        _parseRoutineDays(jsonList);
+
+        if (mounted) {
+          setState(() => _loading = false);
+        }
+      } else if (res.statusCode == 401) {
+        throw Exception("No autorizado (401): revisa token o login.");
+      } else {
+        throw Exception("Error ${res.statusCode}: ${res.body}");
+      }
+    } catch (e) {
+      print("Error cargando rutinas: $e");
+      if (mounted) setState(() => _loading = false);
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("Error al cargar rutinas: $e")),
+      );
+    }
+  }
+
+  Future<void> _fetchLatestRoutineId() async {
+    final token = _session.getToken();
+
+    final url = Uri.parse(
+      "http://10.0.2.2:8080/api/v1/challenges/user/${widget.userId}/latest",
+    );
+
+    print("📡 [RoutinesTab] GET latest → $url");
+
+    final res = await http.get(
+      url,
+      headers: {"Authorization": "Bearer $token"},
+    );
+
+    if (res.statusCode == 200) {
+      final json = jsonDecode(res.body);
+      _lastRoutineId = json["id"];
+      print("🏆 Último routineId: $_lastRoutineId");
+    } else {
+      print("Error obteniendo routineId latest: ${res.body}");
+    }
+  }
+
+
+  /// Agrupa por semana
+  void _parseRoutineDays(List<dynamic> challenges) {
+    final Map<int, List<_RoutineDay>> grouped = {};
+
+    for (final ch in challenges) {
+      final rutina = ch['rutinaJson'];
+      if (rutina == null) continue;
+
+      final weeks = rutina['weeks'] as List<dynamic>? ?? [];
+
+      for (final w in weeks) {
+        final int weekNumber = (w['week'] ?? 0) as int;
+        final List<dynamic> wDays = w['days'] ?? [];
+
+        for (final d in wDays) {
+          final String name = d['name'] ?? 'Día';
+          final List<dynamic> exercises = d['exercises'] ?? [];
+          final String warmup = d['warmup'] ?? "5 min calentamiento";
+          final String cooldown = d['cooldown'] ?? "5 min cooldown";
+
+
+          const int estimatedDuration = 45;
+
+          final day = _RoutineDay(
+            title: name,
+            week: weekNumber,
+            exercisesCount: exercises.length,
+            duration: estimatedDuration,
+            warmup: warmup,
+            cooldown: cooldown,
+            exercisesList: exercises,
+          );
+
+
+          grouped.putIfAbsent(weekNumber, () => []);
+          grouped[weekNumber]!.add(day);
+        }
+      }
+    }
+
+    print("📊 [RoutinesTab] Semanas detectadas: ${grouped.length}");
+    setState(() => _groupedDays = grouped);
+  }
+
+  void _showCreateRoutineDialog() {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Crear Rutina'),
+        content: const Text(
+          'Esta funcionalidad estará disponible próximamente.\n\n'
+              'Podrás crear rutinas personalizadas con ejercicios específicos.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Entendido'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _openRoutineDetail(_RoutineDay routine) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text('Abriendo: ${routine.title} (Semana ${routine.week})'),
+        duration: const Duration(seconds: 1),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    if (_loading) {
+      return const Center(
+        child: CircularProgressIndicator(color: Colors.yellow),
+      );
+    }
+
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Header
+        // HEADER
         Padding(
           padding: const EdgeInsets.all(16),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
-                'Mis Rutinas',
-                style: TextStyle(
+              Text(
+                _athlete != null
+                    ? 'Mis Rutinas de ${_athlete!.fullname.split(' ').first}'
+                    : 'Mis Rutinas',
+                style: const TextStyle(
                   color: Colors.white,
                   fontSize: 24,
                   fontWeight: FontWeight.w800,
@@ -64,26 +219,61 @@ class _RoutinesTabState extends State<RoutinesTab> {
           ),
         ),
 
-        // Lista de rutinas
         Expanded(
-          child: _routines.isEmpty
+          child: _groupedDays.isEmpty
               ? _buildEmptyState()
-              : ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: _routines.length,
-                  itemBuilder: (context, index) {
-                    final routine = _routines[index];
+              : ListView(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            children: _groupedDays.entries.map((entry) {
+              final week = entry.key;
+              final days = entry.value;
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 12),
+
+                  /// Encabezado de la semana
+                  Text(
+                    "Semana $week",
+                    style: const TextStyle(
+                      color: Color(0xFFCCF24D),
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+
+                  const SizedBox(height: 8),
+
+                  ...days.map((d) {
                     return _RoutineCard(
-                      name: routine['name'],
-                      exercises: routine['exercises'],
-                      duration: routine['duration'],
-                      difficulty: routine['difficulty'],
-                      icon: routine['icon'],
-                      color: routine['color'],
-                      onTap: () => _openRoutineDetail(routine),
+                      name: d.title,
+                      exercises: d.exercisesCount,
+                      duration: d.duration,
+                      icon: Icons.fitness_center,
+                      color: const Color(0xFFC8B8FF),
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (_) => RoutineDayScreen(
+                              dayName: d.title,
+                              warmup: d.warmup,
+                              exercises: d.exercisesList,
+                              cooldown: d.cooldown,
+                              userId: widget.userId,
+                              routineId: _lastRoutineId!,
+                              authToken: _session.getToken(),
+                            ),
+                          ),
+                        );
+                      }
                     );
-                  },
-                ),
+                  }).toList(),
+                ],
+              );
+            }).toList(),
+          ),
         ),
       ],
     );
@@ -124,42 +314,36 @@ class _RoutinesTabState extends State<RoutinesTab> {
       ),
     );
   }
-
-  void _showCreateRoutineDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Crear Rutina'),
-        content: const Text(
-          'Esta funcionalidad estará disponible próximamente.\n\n'
-          'Podrás crear rutinas personalizadas con ejercicios específicos.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Entendido'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _openRoutineDetail(Map<String, dynamic> routine) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Abriendo: ${routine['name']}'),
-        duration: const Duration(seconds: 1),
-      ),
-    );
-    // TODO: Navegar a pantalla de detalle de rutina
-  }
 }
+
+
+
+class _RoutineDay {
+  final String title;
+  final int week;
+  final int exercisesCount;
+  final int duration;
+
+  final String warmup;
+  final String cooldown;
+  final List<dynamic> exercisesList;
+
+  _RoutineDay({
+    required this.title,
+    required this.week,
+    required this.exercisesCount,
+    required this.duration,
+    required this.warmup,
+    required this.cooldown,
+    required this.exercisesList,
+  });
+}
+
 
 class _RoutineCard extends StatelessWidget {
   final String name;
   final int exercises;
   final int duration;
-  final String difficulty;
   final IconData icon;
   final Color color;
   final VoidCallback onTap;
@@ -168,7 +352,6 @@ class _RoutineCard extends StatelessWidget {
     required this.name,
     required this.exercises,
     required this.duration,
-    required this.difficulty,
     required this.icon,
     required this.color,
     required this.onTap,
@@ -226,24 +409,14 @@ class _RoutineCard extends StatelessWidget {
                           const SizedBox(width: 8),
                           _InfoChip(
                             icon: Icons.timer,
-                            text: '$duration min',
+                            text: '$duration min aprox.',
                           ),
                         ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        difficulty,
-                        style: TextStyle(
-                          color: _getDifficultyColor(),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
                       ),
                     ],
                   ),
                 ),
 
-                // Flecha
                 const Icon(
                   Icons.arrow_forward_ios,
                   color: Colors.white54,
@@ -256,19 +429,6 @@ class _RoutineCard extends StatelessWidget {
       ),
     );
   }
-
-  Color _getDifficultyColor() {
-    switch (difficulty) {
-      case 'Principiante':
-        return const Color(0xFFCCF24D);
-      case 'Intermedio':
-        return Colors.orange;
-      case 'Avanzado':
-        return Colors.red;
-      default:
-        return Colors.white70;
-    }
-  }
 }
 
 class _InfoChip extends StatelessWidget {
@@ -280,7 +440,6 @@ class _InfoChip extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisSize: MainAxisSize.min,
       children: [
         Icon(icon, size: 14, color: Colors.white70),
         const SizedBox(width: 4),
@@ -295,4 +454,3 @@ class _InfoChip extends StatelessWidget {
     );
   }
 }
-
