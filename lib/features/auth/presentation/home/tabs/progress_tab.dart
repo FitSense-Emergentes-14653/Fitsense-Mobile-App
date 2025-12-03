@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:fitsense/features/auth/data/services/exercise_summary_service.dart';
 import 'package:fitsense/features/auth/data/services/water_intake_service.dart';
+import 'package:fitsense/features/auth/data/services/weekly_progress_service.dart';
 import 'package:fitsense/features/auth/domain/models/exercise_summary_model.dart';
 import 'package:fitsense/features/auth/domain/models/water_intake_model.dart';
 import 'package:fitsense/infrastructure/services/session_service.dart';
@@ -21,22 +22,14 @@ class _ProgressTabState extends State<ProgressTab> {
 
   final ExerciseSummaryService _exerciseService = ExerciseSummaryService();
   final WaterIntakeService _waterService = WaterIntakeService();
+  final WeeklyProgressService _progressService = WeeklyProgressService();
   final SessionService _session = SessionService();
 
   bool _loading = true;
   int? _athleteId;
   ExerciseSummaryModel? _exerciseSummary;
   WaterIntakeModel? _waterIntake;
-
-  // Datos de progreso semanal (simulado por ahora)
-  final List<int> _weeklyWorkouts = [2, 3, 4, 3, 5, 4, 3, 2, 4, 3, 5, 4];
-
-  // Historial de workouts (se puede expandir con endpoints reales)
-  final Map<DateTime, List<String>> _workouts = {
-    DateTime.now().subtract(const Duration(days: 1)): ['Rutina de Fuerza'],
-    DateTime.now().subtract(const Duration(days: 3)): ['Cardio'],
-    DateTime.now().subtract(const Duration(days: 5)): ['Yoga'],
-  };
+  WeeklyProgress? _weeklyProgress;
 
   @override
   void initState() {
@@ -59,23 +52,38 @@ class _ProgressTabState extends State<ProgressTab> {
         return;
       }
 
-      // Obtener último routineId
-      final routineId = await _exerciseService.getLatestRoutineId(widget.userId);
+      // Cargar todos los datos en paralelo
+      final results = await Future.wait([
+        _loadExerciseSummary(),
+        _waterService.getTodayWaterIntake(_athleteId!),
+        _progressService.getWeeklyProgress(widget.userId),
+      ]);
 
-      if (routineId != null) {
-        // Obtener resumen de ejercicios
-        _exerciseSummary = await _exerciseService.getExerciseSummary(widget.userId, routineId);
-        print('📊 [PROGRESS TAB] Exercise Summary: ${_exerciseSummary?.totalCaloriesBurned ?? 0} calorías');
-      }
+      _exerciseSummary = results[0] as ExerciseSummaryModel?;
+      _waterIntake = results[1] as WaterIntakeModel?;
+      _weeklyProgress = results[2] as WeeklyProgress?;
 
-      // Obtener datos de hidratación
-      _waterIntake = await _waterService.getTodayWaterIntake(_athleteId!);
-      print('💧 [PROGRESS TAB] Hidratación: ${_waterIntake?.glasses ?? 0} vasos / ${_waterIntake?.goalGlasses ?? 8} vasos');
+      print('📊 [PROGRESS TAB] Datos cargados:');
+      print('   - Calorías: ${_exerciseSummary?.totalCaloriesBurned ?? 0}');
+      print('   - Ejercicios: ${_exerciseSummary?.exercisesCompleted ?? 0}');
+      print('   - Hidratación: ${_waterIntake?.glasses ?? 0}/${_waterIntake?.goalGlasses ?? 8}');
+      print('   - Progreso semanal: ${_weeklyProgress?.daysCompleted ?? 0}/7');
 
       setState(() => _loading = false);
     } catch (e) {
       print('❌ [PROGRESS TAB] Error cargando datos: $e');
       setState(() => _loading = false);
+    }
+  }
+
+  Future<ExerciseSummaryModel?> _loadExerciseSummary() async {
+    try {
+      final routineId = await _exerciseService.getLatestRoutineId(widget.userId);
+      if (routineId == null) return null;
+      return await _exerciseService.getExerciseSummary(widget.userId, routineId);
+    } catch (e) {
+      print('❌ [PROGRESS TAB] Error cargando resumen de ejercicios: $e');
+      return null;
     }
   }
 
@@ -290,14 +298,15 @@ class _ProgressTabState extends State<ProgressTab> {
           weekdayStyle: TextStyle(color: Colors.white70),
           weekendStyle: TextStyle(color: Colors.white70),
         ),
-        eventLoader: (day) {
-          return _workouts[day] ?? [];
-        },
       ),
     );
   }
 
   Widget _buildProgressChart(bool isWeb) {
+    final daysCompleted = _weeklyProgress?.daysCompleted ?? 0;
+    final totalDays = _weeklyProgress?.totalDays ?? 7;
+    final completionPercentage = _weeklyProgress?.completionPercentage ?? 0;
+
     return Container(
       padding: EdgeInsets.all(isWeb ? 20 : 16),
       decoration: BoxDecoration(
@@ -309,81 +318,204 @@ class _ProgressTabState extends State<ProgressTab> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: const [
-              Icon(Icons.show_chart, color: Colors.yellow, size: 20),
-              SizedBox(width: 8),
-              Text(
-                'Entrenamientos por Semana',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: const [
+                  Icon(Icons.show_chart, color: Colors.yellow, size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    'Progreso Semanal',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFFCCF24D).withValues(alpha: 0.3),
+                      const Color(0xFFC8B8FF).withValues(alpha: 0.3),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFCCF24D)),
+                ),
+                child: Text(
+                  '${completionPercentage.toInt()}%',
+                  style: const TextStyle(
+                    color: Color(0xFFCCF24D),
+                    fontSize: 14,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 20),
 
-          // Gráfico de barras con datos reales
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final barWidth = isWeb ? 30.0 : (constraints.maxWidth / _weeklyWorkouts.length * 0.6);
-              return Row(
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: List.generate(_weeklyWorkouts.length, (index) {
-                  final workouts = _weeklyWorkouts[index];
-                  final height = 30.0 + (workouts * 15.0);
-                  final isCurrentWeek = index == (_weeklyWorkouts.length - 1);
-
-                  return Column(
-                    children: [
-                      // Valor encima de la barra
-                      Text(
-                        workouts.toString(),
-                        style: TextStyle(
-                          color: isCurrentWeek ? const Color(0xFFCCF24D) : Colors.white70,
-                          fontSize: isWeb ? 12 : 10,
-                          fontWeight: isCurrentWeek ? FontWeight.bold : FontWeight.normal,
-                        ),
+          if (daysCompleted > 0) ...[
+            // Barra de progreso visual
+            Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '$daysCompleted de $totalDays días completados',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
                       ),
-                      const SizedBox(height: 4),
-                      Container(
-                        width: barWidth.clamp(15.0, 40.0),
-                        height: height,
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: isCurrentWeek
-                                ? [const Color(0xFFCCF24D), const Color(0xFFCCF24D).withValues(alpha: 0.6)]
-                                : [const Color(0xFFCCF24D).withValues(alpha: 0.7), const Color(0xFFC8B8FF).withValues(alpha: 0.5)],
-                            begin: Alignment.bottomCenter,
-                            end: Alignment.topCenter,
+                    ),
+                    const Icon(
+                      Icons.emoji_events,
+                      color: Color(0xFFCCF24D),
+                      size: 20,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: LinearProgressIndicator(
+                    value: completionPercentage / 100,
+                    backgroundColor: Colors.white.withValues(alpha: 0.1),
+                    valueColor: const AlwaysStoppedAnimation<Color>(Color(0xFFCCF24D)),
+                    minHeight: 12,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Días de la semana con checkmarks
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: List.generate(7, (index) {
+                    final days = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+                    final isCompleted = index < daysCompleted;
+
+                    return Column(
+                      children: [
+                        Container(
+                          width: isWeb ? 36 : 32,
+                          height: isWeb ? 36 : 32,
+                          decoration: BoxDecoration(
+                            gradient: isCompleted
+                                ? const LinearGradient(
+                                    colors: [Color(0xFFCCF24D), Color(0xFFC8B8FF)],
+                                  )
+                                : null,
+                            color: isCompleted ? null : Colors.white.withValues(alpha: 0.1),
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: isCompleted
+                                  ? const Color(0xFFCCF24D)
+                                  : Colors.white.withValues(alpha: 0.3),
+                              width: 2,
+                            ),
                           ),
-                          borderRadius: BorderRadius.circular(4),
+                          child: Center(
+                            child: isCompleted
+                                ? const Icon(Icons.check, color: Colors.black, size: 18)
+                                : Text(
+                                    days[index],
+                                    style: const TextStyle(
+                                      color: Colors.white70,
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'S${index + 1}',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: isWeb ? 11 : 9,
-                        ),
-                      ),
-                    ],
-                  );
-                }),
-              );
-            },
-          ),
-          const SizedBox(height: 12),
-          Center(
-            child: Text(
-              'Últimas ${_weeklyWorkouts.length} semanas',
-              style: TextStyle(
-                color: Colors.white70,
-                fontSize: isWeb ? 13 : 11,
+                        if (!isCompleted) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            days[index],
+                            style: const TextStyle(
+                              color: Colors.white70,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ],
+                    );
+                  }),
+                ),
+              ],
+            ),
+          ] else ...[
+            // Estado vacío
+            Center(
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.calendar_today_outlined,
+                    size: isWeb ? 60 : 50,
+                    color: Colors.white.withValues(alpha: 0.2),
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Aún no has empezado',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Completa tu primer entrenamiento\npara comenzar a ver tu progreso',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 13,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
               ),
+            ),
+          ],
+
+          const SizedBox(height: 16),
+          // Mensaje motivacional
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFF8A5CF6).withValues(alpha: 0.2),
+                  const Color(0xFFCCF24D).withValues(alpha: 0.1),
+                ],
+              ),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: const Color(0xFF8A5CF6).withValues(alpha: 0.4),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.lightbulb_outline,
+                  color: Color(0xFFCCF24D),
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    _weeklyProgress?.motivationalMessage ?? '¡Comienza tu viaje fitness hoy! 💪',
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ],
@@ -460,45 +592,199 @@ class _ProgressTabState extends State<ProgressTab> {
   }
 
   Widget _buildRecentHistory(bool isWeb) {
-    final recentWorkouts = [
-      {'date': 'Hace 1 día', 'name': 'Rutina de Fuerza', 'duration': '45 min'},
-      {'date': 'Hace 3 días', 'name': 'Cardio Intenso', 'duration': '30 min'},
-      {'date': 'Hace 5 días', 'name': 'Yoga & Estiramiento', 'duration': '60 min'},
-    ];
+    final hasData = _exerciseSummary != null && _exerciseSummary!.exercisesCompleted > 0;
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Historial Reciente',
-              style: TextStyle(
-                color: Colors.white,
-                fontSize: 18,
-                fontWeight: FontWeight.w700,
+    return Container(
+      padding: EdgeInsets.all(isWeb ? 20 : 16),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: const [
+                  Icon(Icons.history, color: Color(0xFFCCF24D), size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    'Actividad Reciente',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+              if (hasData)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFCCF24D).withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFFCCF24D)),
+                  ),
+                  child: Text(
+                    '${_exerciseSummary!.exercisesCompleted}',
+                    style: const TextStyle(
+                      color: Color(0xFFCCF24D),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          if (hasData) ...[
+            // Mostrar resumen de la actividad
+            _buildActivitySummary(isWeb),
+          ] else ...[
+            // Estado vacío - No hay actividad
+            Center(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 24),
+                child: Column(
+                  children: [
+                    Icon(
+                      Icons.fitness_center_outlined,
+                      size: isWeb ? 60 : 50,
+                      color: Colors.white.withValues(alpha: 0.2),
+                    ),
+                    const SizedBox(height: 16),
+                    const Text(
+                      'Aún no has empezado',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 16,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Completa tu primer entrenamiento\npara ver tu historial aquí',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 13,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ],
+                ),
               ),
             ),
-            TextButton.icon(
-              onPressed: () {
-                // TODO: Navegar a historial completo
-              },
-              icon: const Icon(Icons.history, color: Color(0xFFCCF24D), size: 16),
-              label: const Text(
-                'Ver todo',
-                style: TextStyle(color: Color(0xFFCCF24D), fontSize: 12),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActivitySummary(bool isWeb) {
+    return Column(
+      children: [
+        // Resumen de ejercicios completados
+        Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              colors: [
+                const Color(0xFFCCF24D).withValues(alpha: 0.1),
+                const Color(0xFFC8B8FF).withValues(alpha: 0.1),
+              ],
+            ),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: const Color(0xFFCCF24D).withValues(alpha: 0.3),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFCCF24D), Color(0xFFC8B8FF)],
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: const Icon(
+                  Icons.fitness_center,
+                  color: Colors.black,
+                  size: 24,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Ejercicios Completados',
+                      style: TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${_exerciseSummary!.exercisesCompleted} ejercicios',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '${_exerciseSummary!.totalCaloriesBurned}',
+                    style: const TextStyle(
+                      color: Color(0xFFCCF24D),
+                      fontSize: 20,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const Text(
+                    'kcal',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        // Última actualización
+        Row(
+          children: [
+            const Icon(
+              Icons.access_time,
+              color: Colors.white70,
+              size: 16,
+            ),
+            const SizedBox(width: 8),
+            Text(
+              'Última actividad: ${_formatDate(_exerciseSummary!.lastUpdated)}',
+              style: const TextStyle(
+                color: Colors.white70,
+                fontSize: 12,
               ),
             ),
           ],
         ),
-        const SizedBox(height: 12),
-        ...recentWorkouts.map((workout) => _HistoryItem(
-          date: workout['date']!,
-          name: workout['name']!,
-          duration: workout['duration']!,
-          isWeb: isWeb,
-        )),
       ],
     );
   }
@@ -613,81 +899,6 @@ class _MetricRow extends StatelessWidget {
   }
 }
 
-class _HistoryItem extends StatelessWidget {
-  final String date;
-  final String name;
-  final String duration;
-  final bool isWeb;
 
-  const _HistoryItem({
-    required this.date,
-    required this.name,
-    required this.duration,
-    this.isWeb = false,
-  });
 
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: EdgeInsets.all(isWeb ? 16 : 12),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            padding: EdgeInsets.all(isWeb ? 12 : 10),
-            decoration: BoxDecoration(
-              gradient: const LinearGradient(
-                colors: [Color(0xFFC8B8FF), Color(0xFFCCF24D)],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: Icon(
-              Icons.fitness_center,
-              size: isWeb ? 24 : 20,
-              color: Colors.black,
-            ),
-          ),
-          SizedBox(width: isWeb ? 16 : 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  name,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: isWeb ? 15 : 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                Text(
-                  date,
-                  style: const TextStyle(
-                    color: Colors.white70,
-                    fontSize: 12,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Text(
-            duration,
-            style: const TextStyle(
-              color: Colors.yellow,
-              fontSize: 12,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
 
