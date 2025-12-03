@@ -10,8 +10,13 @@ import 'package:fitsense/features/auth/data/models/athlete_model.dart';
 
 class RoutinesTab extends StatefulWidget {
   final int userId;
+  final VoidCallback? onOpenChatbot;
 
-  const RoutinesTab({super.key, required this.userId});
+  const RoutinesTab({
+    super.key,
+    required this.userId,
+    this.onOpenChatbot,
+  });
 
   @override
   State<RoutinesTab> createState() => _RoutinesTabState();
@@ -157,32 +162,46 @@ class _RoutinesTabState extends State<RoutinesTab> {
   }
 
   void _showCreateRoutineDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Crear Rutina'),
-        content: const Text(
-          'Esta funcionalidad estará disponible próximamente.\n\n'
-              'Podrás crear rutinas personalizadas con ejercicios específicos.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Entendido'),
+    print('🤖 [RoutinesTab] Abriendo chatbot para crear rutina...');
+
+    if (widget.onOpenChatbot != null) {
+      widget.onOpenChatbot!();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.smart_toy, color: Colors.white),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text('¡Hola! Cuéntame sobre tus objetivos y crearé tu rutina 💪'),
+              ),
+            ],
           ),
-        ],
-      ),
-    );
+          backgroundColor: Color(0xFF8A5CF6),
+          duration: Duration(seconds: 3),
+        ),
+      );
+    } else {
+      // Fallback si no hay callback
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Crear Rutina'),
+          content: const Text(
+            'Usa el botón de Chat flotante para crear tu rutina personalizada con nuestro asistente IA.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Entendido'),
+            ),
+          ],
+        ),
+      );
+    }
   }
 
-  void _openRoutineDetail(_RoutineDay routine) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Abriendo: ${routine.title} (Semana ${routine.week})'),
-        duration: const Duration(seconds: 1),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -281,36 +300,95 @@ class _RoutinesTabState extends State<RoutinesTab> {
 
   Widget _buildEmptyState() {
     return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          const Icon(Icons.fitness_center, size: 80, color: Colors.white24),
-          const SizedBox(height: 16),
-          const Text(
-            'No tienes rutinas aún',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
+      child: Padding(
+        padding: const EdgeInsets.all(32.0),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.05),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.fitness_center,
+                size: 80,
+                color: Color(0xFFCCF24D),
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'Crea tu primera rutina',
-            style: TextStyle(color: Colors.white70),
-          ),
-          const SizedBox(height: 24),
-          ElevatedButton.icon(
-            onPressed: _showCreateRoutineDialog,
-            icon: const Icon(Icons.add),
-            label: const Text('Crear Rutina'),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFFCCF24D),
-              foregroundColor: Colors.black,
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            const SizedBox(height: 24),
+            const Text(
+              'No tienes rutinas aún',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.w800,
+              ),
+              textAlign: TextAlign.center,
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            const Text(
+              'Crea tu primera rutina personalizada\ncon nuestro asistente IA',
+              style: TextStyle(
+                color: Colors.white70,
+                fontSize: 14,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 32),
+            ElevatedButton.icon(
+              onPressed: _showCreateRoutineDialog,
+              icon: const Icon(Icons.smart_toy, size: 24),
+              label: const Text(
+                'Crear Rutina con IA',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFFCCF24D),
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: const Color(0xFF8A5CF6).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(8),
+                border: Border.all(
+                  color: const Color(0xFF8A5CF6).withValues(alpha: 0.3),
+                ),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: const [
+                  Icon(
+                    Icons.info_outline,
+                    size: 16,
+                    color: Color(0xFF8A5CF6),
+                  ),
+                  SizedBox(width: 8),
+                  Text(
+                    'El chatbot te ayudará a crear una rutina\nadaptada a tus objetivos',
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 12,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
