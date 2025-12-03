@@ -74,7 +74,14 @@ class _RoutinesTabState extends State<RoutinesTab> {
       if (res.statusCode == 200) {
         final List<dynamic> jsonList = jsonDecode(res.body);
         _parseRoutineDays(jsonList);
+        print("✅ [RoutinesTab] ${jsonList.length} rutinas cargadas");
 
+        if (mounted) {
+          setState(() => _loading = false);
+        }
+      } else if (res.statusCode == 404) {
+        // 404 es esperado cuando el usuario no tiene rutinas
+        print("ℹ️ [RoutinesTab] Usuario sin rutinas (404) - Mostrando estado vacío");
         if (mounted) {
           setState(() => _loading = false);
         }
@@ -84,35 +91,50 @@ class _RoutinesTabState extends State<RoutinesTab> {
         throw Exception("Error ${res.statusCode}: ${res.body}");
       }
     } catch (e) {
-      print("Error cargando rutinas: $e");
+      print("❌ [RoutinesTab] Error inesperado: $e");
       if (mounted) setState(() => _loading = false);
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error al cargar rutinas: $e")),
-      );
+      // Solo mostrar SnackBar si es un error real (no 404)
+      if (!e.toString().contains('404')) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error al cargar rutinas: $e"),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
   Future<void> _fetchLatestRoutineId() async {
-    final token = _session.getToken();
+    try {
+      final token = _session.getToken();
 
-    final url = Uri.parse(
-      "${AppConfig.apiBaseUrl}/challenges/user/${widget.userId}/latest",
-    );
+      final url = Uri.parse(
+        "${AppConfig.apiBaseUrl}/challenges/user/${widget.userId}/latest",
+      );
 
-    print("📡 [RoutinesTab] GET latest → $url");
+      print("📡 [RoutinesTab] GET latest → $url");
 
-    final res = await http.get(
-      url,
-      headers: {"Authorization": "Bearer $token"},
-    );
+      final res = await http.get(
+        url,
+        headers: {"Authorization": "Bearer $token"},
+      );
 
-    if (res.statusCode == 200) {
-      final json = jsonDecode(res.body);
-      _lastRoutineId = json["id"];
-      print("🏆 Último routineId: $_lastRoutineId");
-    } else {
-      print("Error obteniendo routineId latest: ${res.body}");
+      if (res.statusCode == 200) {
+        final json = jsonDecode(res.body);
+        _lastRoutineId = json["id"];
+        print("✅ [RoutinesTab] Último routineId: $_lastRoutineId");
+      } else if (res.statusCode == 404) {
+        print("ℹ️ [RoutinesTab] Usuario sin rutinas (404) - routineId: null");
+        _lastRoutineId = null;
+      } else {
+        print("⚠️ [RoutinesTab] Error obteniendo routineId: ${res.statusCode} - ${res.body}");
+        _lastRoutineId = null;
+      }
+    } catch (e) {
+      print("❌ [RoutinesTab] Error inesperado obteniendo routineId: $e");
+      _lastRoutineId = null;
     }
   }
 
