@@ -4,6 +4,8 @@ import 'package:fitsense/features/auth/data/datasources/athlete_remote_data_sour
 import 'package:fitsense/features/auth/domain/repositories/athlete_repository.dart';
 import 'package:fitsense/features/auth/data/models/athlete_model.dart';
 import 'package:fitsense/features/auth/data/services/routine_service.dart';
+import 'package:fitsense/features/auth/data/services/home_dashboard_service.dart';
+import 'package:fitsense/features/auth/data/services/weekly_progress_service.dart';
 import 'routine_day_screen.dart';
 
 import '../../notifications/notifications_page.dart';
@@ -26,8 +28,11 @@ class _HomeTabState extends State<HomeTab> {
   final _repo = AthleteRepository(AthleteRemoteDataSource());
   final _session = SessionService();
   final _routineService = RoutineService();
+  final _dashboardService = HomeDashboardService();
+
   AthleteModel? _athlete;
   TodayWorkout? _todayWorkout;
+  HomeDashboardData? _dashboardData;
   bool _loading = true;
   bool _hasRoutines = false;
 
@@ -50,10 +55,17 @@ class _HomeTabState extends State<HomeTab> {
         final athlete = await _repo.getById(athleteId);
         print('🏠 [HomeTab] Atleta cargado: ${athlete.fullname}');
 
-        // Cargar rutina del día
-        print('🏠 [HomeTab] Cargando rutina del día...');
-        final workout = await _routineService.getTodayWorkout(widget.userId);
-        final hasRoutines = await _routineService.hasRoutines(widget.userId);
+        // Cargar todos los datos en paralelo para mejor rendimiento
+        print('🏠 [HomeTab] Cargando rutina y dashboard...');
+        final results = await Future.wait([
+          _routineService.getTodayWorkout(widget.userId),
+          _routineService.hasRoutines(widget.userId),
+          _dashboardService.getDashboardData(widget.userId, athleteId),
+        ]);
+
+        final workout = results[0] as TodayWorkout?;
+        final hasRoutines = results[1] as bool;
+        final dashboardData = results[2] as HomeDashboardData;
 
         if (workout != null) {
           print('🏠 [HomeTab] Workout del día cargado: ${workout.dayName}');
@@ -61,11 +73,14 @@ class _HomeTabState extends State<HomeTab> {
           print('🏠 [HomeTab] No hay workout para hoy');
         }
 
+        print('🏠 [HomeTab] Dashboard cargado: ${dashboardData.daysCompletedThisWeek}/7 días');
+
         if (mounted) {
           setState(() {
             _athlete = athlete;
             _todayWorkout = workout;
             _hasRoutines = hasRoutines;
+            _dashboardData = dashboardData;
             _loading = false;
           });
         }
@@ -258,23 +273,26 @@ class _HomeTabState extends State<HomeTab> {
   }
 
   Widget _buildQuickStats() {
+    final calories = _dashboardData?.totalCaloriesBurned ?? 0;
+    final waterProgress = _dashboardData?.waterProgressPercentage.toInt() ?? 0;
+
     return Row(
       children: [
         Expanded(
           child: _StatCard(
-            icon: Icons.monitor_weight,
-            value: '${_athlete!.weight.toStringAsFixed(1)} kg',
-            label: 'Peso Actual',
-            color: const Color(0xFFC8B8FF),
+            icon: Icons.local_fire_department,
+            value: '$calories',
+            label: 'Calorías Quemadas',
+            color: const Color(0xFFFFA726),
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
           child: _StatCard(
-            icon: Icons.height,
-            value: '${_athlete!.height.toInt()} cm',
-            label: 'Altura',
-            color: const Color(0xFFCCF24D),
+            icon: Icons.water_drop,
+            value: '$waterProgress%',
+            label: 'Hidratación',
+            color: const Color(0xFF42A5F5),
           ),
         ),
       ],
@@ -503,6 +521,9 @@ class _HomeTabState extends State<HomeTab> {
   }
 
   Widget _buildWeeklyProgress() {
+    final progress = _dashboardData?.weeklyProgress ?? WeeklyProgress.empty();
+    final completedDays = progress.completedDaysList;
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
@@ -514,53 +535,123 @@ class _HomeTabState extends State<HomeTab> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            children: const [
-              Icon(Icons.trending_up, color: Colors.yellow, size: 20),
-              SizedBox(width: 8),
-              Text(
-                'Progreso Semanal',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: const [
+                  Icon(Icons.trending_up, color: Colors.yellow, size: 20),
+                  SizedBox(width: 8),
+                  Text(
+                    'Progreso Semanal',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFCCF24D).withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFCCF24D)),
+                ),
+                child: Text(
+                  '${progress.daysCompleted}/${progress.totalDays}',
+                  style: const TextStyle(
+                    color: Color(0xFFCCF24D),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: List.generate(7, (index) {
               final days = ['L', 'M', 'X', 'J', 'V', 'S', 'D'];
+              final isCompleted = completedDays[index];
+
               return Column(
                 children: [
                   Text(
                     days[index],
-                    style: const TextStyle(
-                      color: Colors.white70,
+                    style: TextStyle(
+                      color: isCompleted ? const Color(0xFFCCF24D) : Colors.white70,
                       fontSize: 12,
+                      fontWeight: isCompleted ? FontWeight.w700 : FontWeight.normal,
                     ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 6),
                   Container(
-                    width: 8,
+                    width: 10,
                     height: 40,
                     decoration: BoxDecoration(
-                      color: index < 3
-                          ? const Color(0xFFCCF24D)
-                          : Colors.white.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(4),
+                      gradient: isCompleted
+                          ? const LinearGradient(
+                              colors: [Color(0xFFCCF24D), Color(0xFFC8B8FF)],
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                            )
+                          : null,
+                      color: isCompleted ? null : Colors.white.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(5),
+                      border: Border.all(
+                        color: isCompleted
+                            ? const Color(0xFFCCF24D).withValues(alpha: 0.5)
+                            : Colors.white.withValues(alpha: 0.2),
+                        width: 1.5,
+                      ),
                     ),
+                    child: isCompleted
+                        ? const Center(
+                            child: Icon(
+                              Icons.check,
+                              color: Colors.black,
+                              size: 16,
+                            ),
+                          )
+                        : null,
                   ),
                 ],
               );
             }),
           ),
-          const SizedBox(height: 12),
-          const Text(
-            '3 de 7 días completados esta semana',
-            style: TextStyle(color: Colors.white70, fontSize: 12),
-            textAlign: TextAlign.center,
+          const SizedBox(height: 16),
+          // Mensaje motivacional
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFC8B8FF).withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(
+                color: const Color(0xFFC8B8FF).withValues(alpha: 0.3),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.emoji_events,
+                  color: Color(0xFFCCF24D),
+                  size: 20,
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    progress.motivationalMessage,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
