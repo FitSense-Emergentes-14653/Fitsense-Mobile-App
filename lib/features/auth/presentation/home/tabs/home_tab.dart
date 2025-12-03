@@ -3,13 +3,20 @@ import 'package:fitsense/infrastructure/services/session_service.dart';
 import 'package:fitsense/features/auth/data/datasources/athlete_remote_data_source.dart';
 import 'package:fitsense/features/auth/domain/repositories/athlete_repository.dart';
 import 'package:fitsense/features/auth/data/models/athlete_model.dart';
+import 'package:fitsense/features/auth/data/services/routine_service.dart';
+import 'routine_day_screen.dart';
 
 import '../../notifications/notifications_page.dart';
 
 class HomeTab extends StatefulWidget {
   final int userId;
+  final VoidCallback? onOpenChatbot;
 
-  const HomeTab({super.key, required this.userId});
+  const HomeTab({
+    super.key,
+    required this.userId,
+    this.onOpenChatbot,
+  });
 
   @override
   State<HomeTab> createState() => _HomeTabState();
@@ -18,8 +25,11 @@ class HomeTab extends StatefulWidget {
 class _HomeTabState extends State<HomeTab> {
   final _repo = AthleteRepository(AthleteRemoteDataSource());
   final _session = SessionService();
+  final _routineService = RoutineService();
   AthleteModel? _athlete;
+  TodayWorkout? _todayWorkout;
   bool _loading = true;
+  bool _hasRoutines = false;
 
   @override
   void initState() {
@@ -33,15 +43,29 @@ class _HomeTabState extends State<HomeTab> {
       final athleteId = _session.getAthleteId();
 
       print('🏠 [HomeTab] AthleteId de sesión: $athleteId');
+      print('🏠 [HomeTab] UserId: ${widget.userId}');
 
       if (athleteId > 0) {
         print('🏠 [HomeTab] Cargando datos del atleta...');
         final athlete = await _repo.getById(athleteId);
         print('🏠 [HomeTab] Atleta cargado: ${athlete.fullname}');
 
+        // Cargar rutina del día
+        print('🏠 [HomeTab] Cargando rutina del día...');
+        final workout = await _routineService.getTodayWorkout(widget.userId);
+        final hasRoutines = await _routineService.hasRoutines(widget.userId);
+
+        if (workout != null) {
+          print('🏠 [HomeTab] Workout del día cargado: ${workout.dayName}');
+        } else {
+          print('🏠 [HomeTab] No hay workout para hoy');
+        }
+
         if (mounted) {
           setState(() {
             _athlete = athlete;
+            _todayWorkout = workout;
+            _hasRoutines = hasRoutines;
             _loading = false;
           });
         }
@@ -283,28 +307,197 @@ class _HomeTabState extends State<HomeTab> {
             ],
           ),
           const SizedBox(height: 12),
-          const Text(
-            'No hay entrenamientos programados',
-            style: TextStyle(color: Colors.white70),
-          ),
-          const SizedBox(height: 12),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: () {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Funcionalidad próximamente')),
-                );
-              },
-              icon: const Icon(Icons.add),
-              label: const Text('Crear Rutina'),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFFCCF24D),
-                foregroundColor: Colors.black,
+
+          // Si hay entrenamiento del día, mostrarlo
+          if (_todayWorkout != null) ...[
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFFC8B8FF), Color(0xFFCCF24D)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          _todayWorkout!.dayName,
+                          style: const TextStyle(
+                            color: Colors.black,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.black26,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          'Semana ${_todayWorkout!.weekNumber}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      const Icon(Icons.fitness_center, size: 16, color: Colors.black87),
+                      const SizedBox(width: 4),
+                      Text(
+                        '${_todayWorkout!.exercisesCount} ejercicios',
+                        style: const TextStyle(color: Colors.black87, fontSize: 13),
+                      ),
+                      const SizedBox(width: 12),
+                      const Icon(Icons.access_time, size: 16, color: Colors.black87),
+                      const SizedBox(width: 4),
+                      Text(
+                        '~${_todayWorkout!.estimatedDuration} min',
+                        style: const TextStyle(color: Colors.black87, fontSize: 13),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '🔥 ${_todayWorkout!.warmup}',
+                    style: const TextStyle(
+                      color: Colors.black87,
+                      fontSize: 11,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ],
               ),
             ),
-          ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: () => _startWorkout(),
+                icon: const Icon(Icons.play_arrow),
+                label: const Text('Iniciar Entrenamiento'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFCCF24D),
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
+          ] else ...[
+            // Si no hay entrenamiento, mostrar mensaje y botón para crear
+            const Text(
+              'No hay entrenamientos programados',
+              style: TextStyle(color: Colors.white70),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'Crea una rutina personalizada con nuestro asistente IA',
+              style: TextStyle(color: Colors.white60, fontSize: 12),
+            ),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _navigateToChatbot,
+                icon: const Icon(Icons.smart_toy),
+                label: const Text('Crear Rutina con IA'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: const Color(0xFFCCF24D),
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
+          ],
         ],
+      ),
+    );
+  }
+
+  void _navigateToChatbot() {
+    print('🤖 [HomeTab] Navegando al chatbot...');
+
+    if (widget.onOpenChatbot != null) {
+      widget.onOpenChatbot!();
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Row(
+            children: [
+              Icon(Icons.smart_toy, color: Colors.white),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text('¡Hola! Pregúntame sobre tu rutina de entrenamiento 💪'),
+              ),
+            ],
+          ),
+          backgroundColor: Color(0xFF8A5CF6),
+          duration: Duration(seconds: 3),
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('⚠️ No se pudo abrir el chatbot'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
+  void _startWorkout() async {
+    if (_todayWorkout == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('⚠️ No hay entrenamiento disponible'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    print('🏋️ [HomeTab] Iniciando entrenamiento: ${_todayWorkout!.dayName}');
+    print('🏋️ [HomeTab] Ejercicios: ${_todayWorkout!.exercisesCount}');
+    print('🏋️ [HomeTab] RoutineId: ${_todayWorkout!.routineId}');
+
+    // Obtener el token
+    final token = _session.getToken();
+    if (token == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('⚠️ No se pudo obtener el token de autenticación'),
+          duration: Duration(seconds: 2),
+        ),
+      );
+      return;
+    }
+
+    // Navegar a la pantalla de detalle del día
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (context) => RoutineDayScreen(
+          dayName: _todayWorkout!.dayName,
+          warmup: _todayWorkout!.warmup,
+          exercises: _todayWorkout!.exercises,
+          cooldown: _todayWorkout!.cooldown,
+          userId: widget.userId,
+          routineId: _todayWorkout!.routineId,
+          authToken: token,
+        ),
       ),
     );
   }

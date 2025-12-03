@@ -21,7 +21,7 @@ class _AthleteHomeScreenState extends State<AthleteHomeScreen> {
   int _index = 0;
 
   List<Widget> get _screens => [
-    HomeTab(userId: widget.userId),
+    HomeTab(userId: widget.userId, onOpenChatbot: _openChatbot),
     MetricsTab(userId: widget.userId),
     RoutinesTab(userId: widget.userId),
     ProgressTab(userId: widget.userId),
