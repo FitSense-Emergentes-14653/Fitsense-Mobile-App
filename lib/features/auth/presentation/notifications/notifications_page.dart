@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+// import 'package:flutter/foundation.dart' show kIsWeb; // Disponible si se necesita
 import 'package:http/http.dart' as http;
 import 'package:fitsense/infrastructure/config/app_config.dart';
 
@@ -79,25 +80,25 @@ class _NotificationsPageState extends State<NotificationsPage> {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final isWeb = screenWidth > 600;
-    final maxWidth = isWeb ? 900.0 : screenWidth;
+    final isLargeScreen = screenWidth > 600;
+    final maxWidth = isLargeScreen ? 900.0 : screenWidth;
 
     return Scaffold(
       backgroundColor: const Color(0xFF0D0D0D),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        centerTitle: !isWeb,
+        centerTitle: !isLargeScreen,
         title: Text(
           "Notificaciones",
           style: TextStyle(
             color: const Color(0xFFB8B4FF),
             fontWeight: FontWeight.bold,
-            fontSize: isWeb ? 24 : 20,
+            fontSize: isLargeScreen ? 24 : 20,
           ),
         ),
         actions: [
-          if (isWeb) ...[
+          if (isLargeScreen) ...[
             // Mostrar más información en web
             TextButton.icon(
               onPressed: () {
@@ -141,7 +142,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
             ),
             tooltip: 'Configuración',
           ),
-          SizedBox(width: isWeb ? 16 : 8),
+          SizedBox(width: isLargeScreen ? 16 : 8),
         ],
       ),
       body: Center(
@@ -149,10 +150,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
           constraints: BoxConstraints(maxWidth: maxWidth),
           child: Column(
             children: [
-              SizedBox(height: isWeb ? 24 : 16),
-              _buildTabs(isWeb),
-              SizedBox(height: isWeb ? 24 : 16),
-              Expanded(child: _buildNotificationList(isWeb)),
+              SizedBox(height: isLargeScreen ? 24 : 16),
+              _buildTabs(isLargeScreen),
+              SizedBox(height: isLargeScreen ? 24 : 16),
+              Expanded(child: _buildNotificationList(isLargeScreen)),
             ],
           ),
         ),
@@ -162,9 +163,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   // ----------------------------- TABS ---------------------------------
 
-  Widget _buildTabs(bool isWeb) {
+  Widget _buildTabs(bool isLargeScreen) {
     return Container(
-      margin: EdgeInsets.symmetric(horizontal: isWeb ? 32 : 16),
+      margin: EdgeInsets.symmetric(horizontal: isLargeScreen ? 32 : 16),
       padding: const EdgeInsets.all(4),
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.05),
@@ -181,7 +182,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
               Icons.alarm,
               selectedTab == 0,
               () => setState(() => selectedTab = 0),
-              isWeb,
+              isLargeScreen,
             ),
           ),
           const SizedBox(width: 4),
@@ -191,7 +192,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
               Icons.notifications_active,
               selectedTab == 1,
               () => setState(() => selectedTab = 1),
-              isWeb,
+              isLargeScreen,
             ),
           ),
         ],
@@ -204,15 +205,15 @@ class _NotificationsPageState extends State<NotificationsPage> {
     IconData icon,
     bool active,
     VoidCallback onTap,
-    bool isWeb,
+    bool isLargeScreen,
   ) {
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         padding: EdgeInsets.symmetric(
-          horizontal: isWeb ? 32 : 16,
-          vertical: isWeb ? 14 : 12,
+          horizontal: isLargeScreen ? 32 : 16,
+          vertical: isLargeScreen ? 14 : 12,
         ),
         decoration: BoxDecoration(
           gradient: active
@@ -238,9 +239,9 @@ class _NotificationsPageState extends State<NotificationsPage> {
             Icon(
               icon,
               color: active ? Colors.black : Colors.white70,
-              size: isWeb ? 20 : 18,
+              size: isLargeScreen ? 20 : 18,
             ),
-            if (isWeb) ...[
+            if (isLargeScreen) ...[
               const SizedBox(width: 8),
               Text(
                 text,
@@ -259,7 +260,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   // ----------------------------- LISTA ---------------------------------
 
-  Widget _buildNotificationList(bool isWeb) {
+  Widget _buildNotificationList(bool isLargeScreen) {
     return FutureBuilder(
       future: notificationFuture,
       builder: (context, snapshot) {
@@ -278,7 +279,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
               children: [
                 Icon(
                   Icons.error_outline,
-                  size: isWeb ? 64 : 48,
+                  size: isLargeScreen ? 64 : 48,
                   color: Colors.red.withValues(alpha: 0.7),
                 ),
                 const SizedBox(height: 16),
@@ -342,7 +343,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   ),
                   child: Icon(
                     selectedTab == 0 ? Icons.alarm_off : Icons.notifications_off,
-                    size: isWeb ? 64 : 48,
+                    size: isLargeScreen ? 64 : 48,
                     color: Colors.white.withValues(alpha: 0.3),
                   ),
                 ),
@@ -353,7 +354,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                       : "No hay notificaciones del sistema",
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: isWeb ? 18 : 16,
+                    fontSize: isLargeScreen ? 18 : 16,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -374,11 +375,11 @@ class _NotificationsPageState extends State<NotificationsPage> {
         }
 
         // Layout responsive
-        if (isWeb && listToShow.length > 0) {
+        if (isLargeScreen && listToShow.length > 0) {
           // En web, mostrar en grid si hay muchas notificaciones
           return GridView.builder(
             padding: EdgeInsets.symmetric(
-              horizontal: isWeb ? 32 : 16,
+              horizontal: isLargeScreen ? 32 : 16,
               vertical: 8,
             ),
             gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -389,7 +390,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
             ),
             itemCount: listToShow.length,
             itemBuilder: (context, index) {
-              return _notificationTile(listToShow[index], isWeb);
+              return _notificationTile(listToShow[index], isLargeScreen);
             },
           );
         }
@@ -397,12 +398,12 @@ class _NotificationsPageState extends State<NotificationsPage> {
         // En mobile, mostrar en lista
         return ListView.builder(
           padding: EdgeInsets.symmetric(
-            horizontal: isWeb ? 32 : 16,
+            horizontal: isLargeScreen ? 32 : 16,
             vertical: 8,
           ),
           itemCount: listToShow.length,
           itemBuilder: (context, index) {
-            return _notificationTile(listToShow[index], isWeb);
+            return _notificationTile(listToShow[index], isLargeScreen);
           },
         );
       },
@@ -411,13 +412,13 @@ class _NotificationsPageState extends State<NotificationsPage> {
 
   // --------------------------- TILE -----------------------------------
 
-  Widget _notificationTile(NotificationModel notif, bool isWeb) {
+  Widget _notificationTile(NotificationModel notif, bool isLargeScreen) {
     final bool isRead = notif.isRead;
     final bool isReminder = notif.type.toUpperCase() == "REMINDER";
 
     return Container(
-      margin: EdgeInsets.only(bottom: isWeb ? 0 : 12),
-      padding: EdgeInsets.all(isWeb ? 16 : 14),
+      margin: EdgeInsets.only(bottom: isLargeScreen ? 0 : 12),
+      padding: EdgeInsets.all(isLargeScreen ? 16 : 14),
       decoration: BoxDecoration(
         gradient: isRead
             ? null
@@ -469,10 +470,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
             child: Icon(
               isReminder ? Icons.alarm : Icons.notifications_active,
               color: Colors.black,
-              size: isWeb ? 24 : 20,
+              size: isLargeScreen ? 24 : 20,
             ),
           ),
-          SizedBox(width: isWeb ? 16 : 12),
+          SizedBox(width: isLargeScreen ? 16 : 12),
 
           // Contenido
           Expanded(
@@ -487,7 +488,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                         notif.title,
                         style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: isWeb ? 15 : 14,
+                          fontSize: isLargeScreen ? 15 : 14,
                           color: Colors.black,
                         ),
                         maxLines: 1,
@@ -524,10 +525,10 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   child: Text(
                     notif.body,
                     style: TextStyle(
-                      fontSize: isWeb ? 13 : 12,
+                      fontSize: isLargeScreen ? 13 : 12,
                       color: Colors.black87,
                     ),
-                    maxLines: isWeb ? 3 : 2,
+                    maxLines: isLargeScreen ? 3 : 2,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
@@ -537,7 +538,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                   children: [
                     Icon(
                       Icons.access_time,
-                      size: isWeb ? 14 : 12,
+                      size: isLargeScreen ? 14 : 12,
                       color: Colors.grey.shade600,
                     ),
                     const SizedBox(width: 4),
@@ -545,7 +546,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
                       child: Text(
                         formatDate(notif.createdAt),
                         style: TextStyle(
-                          fontSize: isWeb ? 12 : 11,
+                          fontSize: isLargeScreen ? 12 : 11,
                           color: Colors.grey.shade600,
                           fontWeight: FontWeight.w500,
                         ),
@@ -560,7 +561,7 @@ class _NotificationsPageState extends State<NotificationsPage> {
           ),
 
           // Botón de acción (opcional)
-          if (isWeb) ...[
+          if (isLargeScreen) ...[
             const SizedBox(width: 8),
             IconButton(
               onPressed: () {

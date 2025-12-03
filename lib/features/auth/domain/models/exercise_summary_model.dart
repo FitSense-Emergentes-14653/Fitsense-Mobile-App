@@ -16,6 +16,18 @@ class ExerciseSummaryModel {
   factory ExerciseSummaryModel.fromJson(Map<String, dynamic> json) {
     final data = json['data'] ?? json;
 
+    // Convertir totalCaloriesBurned de double a int de manera segura
+    int calories = 0;
+    if (data['totalCaloriesBurned'] != null) {
+      if (data['totalCaloriesBurned'] is double) {
+        calories = (data['totalCaloriesBurned'] as double).toInt();
+      } else if (data['totalCaloriesBurned'] is int) {
+        calories = data['totalCaloriesBurned'] as int;
+      } else {
+        calories = int.tryParse(data['totalCaloriesBurned'].toString()) ?? 0;
+      }
+    }
+
     return ExerciseSummaryModel(
       userId: data['userId']?.toString() ?? '0',
       routineId: data['routineId'] ?? 0,
@@ -23,7 +35,7 @@ class ExerciseSummaryModel {
       lastUpdated: data['lastUpdated'] != null
           ? DateTime.parse(data['lastUpdated'])
           : DateTime.now(),
-      totalCaloriesBurned: data['totalCaloriesBurned'] ?? 0,
+      totalCaloriesBurned: calories,
     );
   }
 

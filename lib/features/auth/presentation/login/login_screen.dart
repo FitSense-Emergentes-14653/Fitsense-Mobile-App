@@ -151,8 +151,8 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final isWide = screenWidth > 600;
-    final maxWidth = isWide ? 500.0 : screenWidth;
+    final isLargeScreen = screenWidth > 600;
+    final maxWidth = isLargeScreen ? 500.0 : screenWidth;
 
     return AppBackground(
       scrollable: true,
@@ -160,8 +160,8 @@ class _LoginScreenState extends State<LoginScreen> {
         child: Container(
           constraints: BoxConstraints(maxWidth: maxWidth),
           padding: EdgeInsets.symmetric(
-            horizontal: isWide ? 32 : 20,
-            vertical: isWide ? 32 : 16,
+            horizontal: isLargeScreen ? 32 : 20,
+            vertical: isLargeScreen ? 32 : 16,
           ),
           child: Form(
             key: _formKey,
@@ -191,7 +191,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const Spacer(),
                   ],
                 ),
-                SizedBox(height: isWide ? 40 : 24),
+                SizedBox(height: isLargeScreen ? 40 : 24),
 
                 // Logo/Icono
                 Center(
@@ -214,12 +214,12 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     child: Icon(
                       Icons.fitness_center,
-                      size: isWide ? 48 : 40,
+                      size: isLargeScreen ? 48 : 40,
                       color: Colors.black,
                     ),
                   ),
                 ),
-                SizedBox(height: isWide ? 32 : 24),
+                SizedBox(height: isLargeScreen ? 32 : 24),
 
                 // Título principal
                 Center(
@@ -230,7 +230,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         style: TextStyle(
                           color: Colors.white,
                           fontWeight: FontWeight.w800,
-                          fontSize: isWide ? 32 : 28,
+                          fontSize: isLargeScreen ? 32 : 28,
                           letterSpacing: -0.5,
                         ),
                       ),
@@ -251,7 +251,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           style: TextStyle(
                             color: Colors.black,
                             fontWeight: FontWeight.w800,
-                            fontSize: isWide ? 16 : 14,
+                            fontSize: isLargeScreen ? 16 : 14,
                             letterSpacing: 0.5,
                           ),
                         ),
@@ -259,20 +259,20 @@ class _LoginScreenState extends State<LoginScreen> {
                     ],
                   ),
                 ),
-                SizedBox(height: isWide ? 16 : 12),
+                SizedBox(height: isLargeScreen ? 16 : 12),
                 Padding(
-                  padding: EdgeInsets.symmetric(horizontal: isWide ? 32 : 16),
+                  padding: EdgeInsets.symmetric(horizontal: isLargeScreen ? 32 : 16),
                   child: Text(
                     'Ingresa tus credenciales para continuar tu viaje fitness',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.white.withValues(alpha: 0.7),
-                      fontSize: isWide ? 15 : 13,
+                      fontSize: isLargeScreen ? 15 : 13,
                       height: 1.4,
                     ),
                   ),
                 ),
-                SizedBox(height: isWide ? 40 : 32),
+                SizedBox(height: isLargeScreen ? 40 : 32),
 
               // Container de campos con glassmorphism
               Container(
@@ -299,7 +299,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ],
                 ),
-                padding: EdgeInsets.all(isWide ? 28 : 20),
+                padding: EdgeInsets.all(isLargeScreen ? 28 : 20),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
@@ -323,7 +323,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w700,
-                            fontSize: isWide ? 15 : 14,
+                            fontSize: isLargeScreen ? 15 : 14,
                           ),
                         ),
                       ],
@@ -333,7 +333,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _emailCtrl,
                       hint: 'tu@email.com',
                       keyboardType: TextInputType.emailAddress,
-                      isWide: isWide,
+                      isLargeScreen: isLargeScreen,
                       validator: (v) {
                         final t = v?.trim() ?? '';
                         if (t.isEmpty) return 'Ingresa tu email';
@@ -341,7 +341,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         return null;
                       },
                     ),
-                    SizedBox(height: isWide ? 24 : 20),
+                    SizedBox(height: isLargeScreen ? 24 : 20),
                     Row(
                       children: [
                         Container(
@@ -362,7 +362,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           style: TextStyle(
                             color: Colors.white,
                             fontWeight: FontWeight.w700,
-                            fontSize: isWide ? 15 : 14,
+                            fontSize: isLargeScreen ? 15 : 14,
                           ),
                         ),
                       ],
@@ -372,7 +372,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _passCtrl,
                       hint: '••••••••',
                       obscure: _obscure,
-                      isWide: isWide,
+                      isLargeScreen: isLargeScreen,
                       trailing: IconButton(
                         onPressed: () => setState(() => _obscure = !_obscure),
                         icon: Icon(
@@ -416,7 +416,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           style: TextStyle(
                             color: const Color(0xFFCCF24D),
                             fontWeight: FontWeight.w700,
-                            fontSize: isWide ? 14 : 13,
+                            fontSize: isLargeScreen ? 14 : 13,
                           ),
                         ),
                       ),
@@ -425,11 +425,11 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
 
-              SizedBox(height: isWide ? 32 : 24),
+              SizedBox(height: isLargeScreen ? 32 : 24),
 
               // Botón principal mejorado
               SizedBox(
-                height: isWide ? 56 : 52,
+                height: isLargeScreen ? 56 : 52,
                 child: ElevatedButton(
                   onPressed: _loading ? null : _onLogin,
                   style: ElevatedButton.styleFrom(
@@ -483,7 +483,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                   'Iniciar Sesión',
                                   style: TextStyle(
                                     fontWeight: FontWeight.w800,
-                                    fontSize: isWide ? 17 : 16,
+                                    fontSize: isLargeScreen ? 17 : 16,
                                     letterSpacing: 0.5,
                                   ),
                                 ),
@@ -494,7 +494,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
               ),
 
-              SizedBox(height: isWide ? 32 : 24),
+              SizedBox(height: isLargeScreen ? 32 : 24),
 
               // Divider con texto
               Row(
@@ -518,7 +518,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       'o continúa con',
                       style: TextStyle(
                         color: Colors.white.withValues(alpha: 0.6),
-                        fontSize: isWide ? 13 : 12,
+                        fontSize: isLargeScreen ? 13 : 12,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -539,7 +539,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 ],
               ),
 
-              SizedBox(height: isWide ? 24 : 20),
+              SizedBox(height: isLargeScreen ? 24 : 20),
 
               // Redes sociales mejoradas
               Row(
@@ -547,29 +547,29 @@ class _LoginScreenState extends State<LoginScreen> {
                 children: [
                   _SocialCircle(
                     icon: Icons.g_mobiledata_rounded,
-                    isWide: isWide,
+                    isLargeScreen: isLargeScreen,
                   ),
-                  SizedBox(width: isWide ? 20 : 16),
+                  SizedBox(width: isLargeScreen ? 20 : 16),
                   _SocialCircle(
                     icon: Icons.facebook_rounded,
-                    isWide: isWide,
+                    isLargeScreen: isLargeScreen,
                   ),
-                  SizedBox(width: isWide ? 20 : 16),
+                  SizedBox(width: isLargeScreen ? 20 : 16),
                   _SocialCircle(
                     icon: Icons.apple_rounded,
-                    isWide: isWide,
+                    isLargeScreen: isLargeScreen,
                   ),
                 ],
               ),
 
-              SizedBox(height: isWide ? 32 : 24),
+              SizedBox(height: isLargeScreen ? 32 : 24),
 
               // Link de registro mejorado
               Center(
                 child: Container(
                   padding: EdgeInsets.symmetric(
-                    horizontal: isWide ? 24 : 20,
-                    vertical: isWide ? 14 : 12,
+                    horizontal: isLargeScreen ? 24 : 20,
+                    vertical: isLargeScreen ? 14 : 12,
                   ),
                   decoration: BoxDecoration(
                     color: Colors.white.withValues(alpha: 0.05),
@@ -585,7 +585,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         '¿Aún no tienes cuenta?',
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.8),
-                          fontSize: isWide ? 14 : 13,
+                          fontSize: isLargeScreen ? 14 : 13,
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -632,7 +632,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                 style: TextStyle(
                                   color: Colors.white,
                                   fontWeight: FontWeight.w800,
-                                  fontSize: isWide ? 14 : 13,
+                                  fontSize: isLargeScreen ? 14 : 13,
                                 ),
                               ),
                               const SizedBox(width: 4),
@@ -649,7 +649,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               ),
-              SizedBox(height: isWide ? 32 : 24),
+              SizedBox(height: isLargeScreen ? 32 : 24),
             ],
           ),
         ),
@@ -668,7 +668,7 @@ class _Input extends StatelessWidget {
   final TextInputType? keyboardType;
   final Widget? trailing;
   final String? Function(String?)? validator;
-  final bool isWide;
+  final bool isLargeScreen;
 
   const _Input({
     required this.controller,
@@ -677,13 +677,13 @@ class _Input extends StatelessWidget {
     this.keyboardType,
     this.trailing,
     this.validator,
-    this.isWide = false,
+    this.isLargeScreen = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: isWide ? 54 : 50,
+      height: isLargeScreen ? 54 : 50,
       decoration: BoxDecoration(
         color: Colors.white.withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(14),
@@ -707,19 +707,19 @@ class _Input extends StatelessWidget {
         style: TextStyle(
           color: Colors.black87,
           fontWeight: FontWeight.w600,
-          fontSize: isWide ? 15 : 14,
+          fontSize: isLargeScreen ? 15 : 14,
         ),
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: TextStyle(
             color: Colors.black45,
             fontWeight: FontWeight.w500,
-            fontSize: isWide ? 15 : 14,
+            fontSize: isLargeScreen ? 15 : 14,
           ),
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(
-            horizontal: isWide ? 18 : 16,
-            vertical: isWide ? 16 : 14,
+            horizontal: isLargeScreen ? 18 : 16,
+            vertical: isLargeScreen ? 16 : 14,
           ),
           suffixIcon: trailing,
         ),
@@ -730,11 +730,11 @@ class _Input extends StatelessWidget {
 
 class _SocialCircle extends StatefulWidget {
   final IconData icon;
-  final bool isWide;
+  final bool isLargeScreen;
 
   const _SocialCircle({
     required this.icon,
-    this.isWide = false,
+    this.isLargeScreen = false,
   });
 
   @override
@@ -746,7 +746,7 @@ class _SocialCircleState extends State<_SocialCircle> {
 
   @override
   Widget build(BuildContext context) {
-    final size = widget.isWide ? 56.0 : 52.0;
+    final size = widget.isLargeScreen ? 56.0 : 52.0;
 
     return GestureDetector(
       onTapDown: (_) => setState(() => _pressed = true),
@@ -795,7 +795,7 @@ class _SocialCircleState extends State<_SocialCircle> {
           child: Icon(
             widget.icon,
             color: Colors.white,
-            size: widget.isWide ? 28 : 26,
+            size: widget.isLargeScreen ? 28 : 26,
           ),
         ),
       ),

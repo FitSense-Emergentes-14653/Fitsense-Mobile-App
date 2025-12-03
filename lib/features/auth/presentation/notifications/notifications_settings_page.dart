@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+// import 'package:flutter/foundation.dart' show kIsWeb; // Disponible si se necesita
 import 'local_notifications_settings_page.dart';
 import 'notifications_handler.dart';
 
@@ -63,21 +64,21 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final isWeb = screenWidth > 600;
-    final maxWidth = isWeb ? 700.0 : screenWidth;
+    final isLargeScreen = screenWidth > 600;
+    final maxWidth = isLargeScreen ? 700.0 : screenWidth;
 
     return Scaffold(
       backgroundColor: const Color(0xFF0D0D0D),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        centerTitle: !isWeb,
+        centerTitle: !isLargeScreen,
         title: Text(
           "Configuración de Notificaciones",
           style: TextStyle(
             color: const Color(0xFFB8B4FF),
             fontWeight: FontWeight.bold,
-            fontSize: isWeb ? 24 : 20,
+            fontSize: isLargeScreen ? 24 : 20,
           ),
         ),
       ),
@@ -86,13 +87,13 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
           constraints: BoxConstraints(maxWidth: maxWidth),
           child: ListView(
             padding: EdgeInsets.symmetric(
-              horizontal: isWeb ? 32 : 16,
-              vertical: isWeb ? 24 : 16,
+              horizontal: isLargeScreen ? 32 : 16,
+              vertical: isLargeScreen ? 24 : 16,
             ),
             children: [
               // Header informativo
               Container(
-                padding: EdgeInsets.all(isWeb ? 20 : 16),
+                padding: EdgeInsets.all(isLargeScreen ? 20 : 16),
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
                     colors: [
@@ -118,20 +119,20 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                         'Personaliza cómo recibes las notificaciones de FitSense',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: isWeb ? 14 : 13,
+                          fontSize: isLargeScreen ? 14 : 13,
                         ),
                       ),
                     ),
                   ],
                 ),
               ),
-              SizedBox(height: isWeb ? 32 : 24),
+              SizedBox(height: isLargeScreen ? 32 : 24),
 
               // Sección: General
               _buildSection(
                 'General',
                 Icons.notifications_active,
-                isWeb,
+                isLargeScreen,
                 [
                   _switchTile(
                     "Notificaciones Generales",
@@ -143,7 +144,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                       _saveSettings();
                       _testNotification();
                     },
-                    isWeb,
+                    isLargeScreen,
                   ),
                   _switchTile(
                     "Recordatorios",
@@ -154,18 +155,18 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                       setState(() => reminders = v);
                       _saveSettings();
                     },
-                    isWeb,
+                    isLargeScreen,
                   ),
                 ],
               ),
 
-              SizedBox(height: isWeb ? 24 : 16),
+              SizedBox(height: isLargeScreen ? 24 : 16),
 
               // Sección: Sonido y Vibración
               _buildSection(
                 'Sonido y Vibración',
                 Icons.volume_up,
-                isWeb,
+                isLargeScreen,
                 [
                   _switchTile(
                     "Sonido",
@@ -177,7 +178,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                       _saveSettings();
                       _testNotification();
                     },
-                    isWeb,
+                    isLargeScreen,
                   ),
                   _switchTile(
                     "Vibración",
@@ -188,18 +189,18 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                       setState(() => vibrate = v);
                       _saveSettings();
                     },
-                    isWeb,
+                    isLargeScreen,
                   ),
                 ],
               ),
 
-              SizedBox(height: isWeb ? 24 : 16),
+              SizedBox(height: isLargeScreen ? 24 : 16),
 
               // Sección: Privacidad
               _buildSection(
                 'Privacidad',
                 Icons.lock,
-                isWeb,
+                isLargeScreen,
                 [
                   _switchTile(
                     "Mostrar en Pantalla Bloqueada",
@@ -211,7 +212,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                       _saveSettings();
                       _testNotification();
                     },
-                    isWeb,
+                    isLargeScreen,
                   ),
                   _switchTile(
                     "Modo No Molestar",
@@ -222,12 +223,12 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                       setState(() => dnd = v);
                       _saveSettings();
                     },
-                    isWeb,
+                    isLargeScreen,
                   ),
                 ],
               ),
 
-              SizedBox(height: isWeb ? 32 : 24),
+              SizedBox(height: isLargeScreen ? 32 : 24),
 
               // Botón de prueba
               Center(
@@ -239,8 +240,8 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
                     backgroundColor: const Color(0xFFCCF24D),
                     foregroundColor: Colors.black,
                     padding: EdgeInsets.symmetric(
-                      horizontal: isWeb ? 32 : 24,
-                      vertical: isWeb ? 16 : 12,
+                      horizontal: isLargeScreen ? 32 : 24,
+                      vertical: isLargeScreen ? 16 : 12,
                     ),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
@@ -262,7 +263,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
   Widget _buildSection(
     String title,
     IconData icon,
-    bool isWeb,
+    bool isLargeScreen,
     List<Widget> children,
   ) {
     return Column(
@@ -275,14 +276,14 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
               Icon(
                 icon,
                 color: const Color(0xFFCCF24D),
-                size: isWeb ? 24 : 20,
+                size: isLargeScreen ? 24 : 20,
               ),
               const SizedBox(width: 8),
               Text(
                 title,
                 style: TextStyle(
                   color: Colors.white,
-                  fontSize: isWeb ? 18 : 16,
+                  fontSize: isLargeScreen ? 18 : 16,
                   fontWeight: FontWeight.w700,
                 ),
               ),
@@ -311,7 +312,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
     IconData icon,
     bool value,
     Function(bool) onChanged,
-    bool isWeb,
+    bool isLargeScreen,
   ) {
     return Container(
       decoration: BoxDecoration(
@@ -324,8 +325,8 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
       ),
       child: SwitchListTile(
         contentPadding: EdgeInsets.symmetric(
-          horizontal: isWeb ? 20 : 16,
-          vertical: isWeb ? 8 : 4,
+          horizontal: isLargeScreen ? 20 : 16,
+          vertical: isLargeScreen ? 8 : 4,
         ),
         secondary: Container(
           padding: const EdgeInsets.all(8),
@@ -338,7 +339,7 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
           child: Icon(
             icon,
             color: value ? const Color(0xFFCCF24D) : Colors.white54,
-            size: isWeb ? 24 : 20,
+            size: isLargeScreen ? 24 : 20,
           ),
         ),
         title: Text(
@@ -346,14 +347,14 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.w600,
-            fontSize: isWeb ? 15 : 14,
+            fontSize: isLargeScreen ? 15 : 14,
           ),
         ),
         subtitle: Text(
           subtitle,
           style: TextStyle(
             color: Colors.white70,
-            fontSize: isWeb ? 13 : 12,
+            fontSize: isLargeScreen ? 13 : 12,
           ),
         ),
         value: value,

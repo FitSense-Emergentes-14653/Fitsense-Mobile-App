@@ -49,16 +49,31 @@ class WeeklyProgressService {
         final jsonData = json.decode(response.body);
         print('📅 [WEEKLY PROGRESS] Datos: $jsonData');
 
-        final exercisesCompleted = jsonData['exercisesCompleted'] ?? 0;
-        final lastUpdated = jsonData['lastUpdated'] != null
-            ? DateTime.parse(jsonData['lastUpdated'])
+        // Extraer el objeto 'data' de la respuesta
+        final data = jsonData['data'] ?? jsonData;
+
+        // Manejar exercisesCompleted que puede venir como int o double
+        int exercisesCompleted = 0;
+        if (data['exercisesCompleted'] != null) {
+          if (data['exercisesCompleted'] is double) {
+            exercisesCompleted = (data['exercisesCompleted'] as double).toInt();
+          } else if (data['exercisesCompleted'] is int) {
+            exercisesCompleted = data['exercisesCompleted'] as int;
+          } else {
+            exercisesCompleted = int.tryParse(data['exercisesCompleted'].toString()) ?? 0;
+          }
+        }
+
+        final lastUpdated = data['lastUpdated'] != null
+            ? DateTime.parse(data['lastUpdated'])
             : DateTime.now();
 
         // Calcular días completados basado en ejercicios completados
         // Asumiendo que cada día tiene aproximadamente 3 ejercicios
         final daysCompleted = (exercisesCompleted / 3).floor();
 
-        print('📅 [WEEKLY PROGRESS] Días completados: $daysCompleted');
+        print('📅 [WEEKLY PROGRESS] Ejercicios completados: $exercisesCompleted');
+        print('📅 [WEEKLY PROGRESS] Días completados calculados: $daysCompleted');
 
         return WeeklyProgress(
           daysCompleted: daysCompleted.clamp(0, 7),

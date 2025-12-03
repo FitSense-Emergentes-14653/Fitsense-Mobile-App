@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+// import 'package:flutter/foundation.dart' show kIsWeb; // Disponible si se necesita
 import 'package:fitsense/core/widgets/drawer/background.dart';
 
 // Session & Auth
@@ -104,8 +105,8 @@ class _AthleteSettingsScreenState extends State<AthleteSettingsScreen> {
   @override
   Widget build(BuildContext context) {
     final screenWidth = MediaQuery.of(context).size.width;
-    final isWeb = screenWidth > 600;
-    final maxWidth = isWeb ? 900.0 : screenWidth;
+    final isLargeScreen = screenWidth > 600;
+    final maxWidth = isLargeScreen ? 900.0 : screenWidth;
 
     return AppBackground(
       useSafeArea: false,
@@ -114,10 +115,10 @@ class _AthleteSettingsScreenState extends State<AthleteSettingsScreen> {
           child: Container(
             constraints: BoxConstraints(maxWidth: maxWidth),
             padding: EdgeInsets.fromLTRB(
-              isWeb ? 32 : 18,
-              isWeb ? 24 : 12,
-              isWeb ? 32 : 18,
-              isWeb ? 24 : 18,
+              isLargeScreen ? 32 : 18,
+              isLargeScreen ? 24 : 12,
+              isLargeScreen ? 32 : 18,
+              isLargeScreen ? 24 : 18,
             ),
             child: Column(
               children: [
@@ -135,7 +136,7 @@ class _AthleteSettingsScreenState extends State<AthleteSettingsScreen> {
                         tooltip: 'Volver',
                       ),
                     ),
-                    SizedBox(width: isWeb ? 16 : 12),
+                    SizedBox(width: isLargeScreen ? 16 : 12),
                     Expanded(
                       child: Row(
                         children: [
@@ -154,22 +155,22 @@ class _AthleteSettingsScreenState extends State<AthleteSettingsScreen> {
                             'Configuración',
                             style: TextStyle(
                               color: Colors.white,
-                              fontSize: isWeb ? 26 : 20,
+                              fontSize: isLargeScreen ? 26 : 20,
                               fontWeight: FontWeight.w800,
                             ),
                           ),
                         ],
                       ),
                     ),
-                    if (!isWeb) const SizedBox(width: 8),
+                    if (!isLargeScreen) const SizedBox(width: 8),
                     ElevatedButton.icon(
                       onPressed: _logout,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.red.shade700,
                         foregroundColor: Colors.white,
                         padding: EdgeInsets.symmetric(
-                          horizontal: isWeb ? 20 : 12,
-                          vertical: isWeb ? 14 : 10,
+                          horizontal: isLargeScreen ? 20 : 12,
+                          vertical: isLargeScreen ? 14 : 10,
                         ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -178,14 +179,14 @@ class _AthleteSettingsScreenState extends State<AthleteSettingsScreen> {
                       ),
                       icon: const Icon(Icons.logout_rounded, size: 18),
                       label: Text(
-                        isWeb ? 'Cerrar sesión' : 'Salir',
+                        isLargeScreen ? 'Cerrar sesión' : 'Salir',
                         style: const TextStyle(fontWeight: FontWeight.w700),
                       ),
                     ),
                   ],
                 ),
 
-                SizedBox(height: isWeb ? 32 : 16),
+                SizedBox(height: isLargeScreen ? 32 : 16),
 
                 // Content
                 Expanded(
@@ -206,7 +207,7 @@ class _AthleteSettingsScreenState extends State<AthleteSettingsScreen> {
                           title: 'Aún no completas tu perfil',
                           subtitle: 'Cuéntanos tus datos para personalizar tu experiencia.',
                           actionText: 'Completar ahora',
-                          isWeb: isWeb,
+                          isLargeScreen: isLargeScreen,
                           onTap: () {
                             Navigator.of(context).push(
                               PageRouteBuilder(
@@ -226,7 +227,7 @@ class _AthleteSettingsScreenState extends State<AthleteSettingsScreen> {
                             // Header card mejorado
                             Container(
                               width: double.infinity,
-                              padding: EdgeInsets.all(isWeb ? 24 : 16),
+                              padding: EdgeInsets.all(isLargeScreen ? 24 : 16),
                               decoration: BoxDecoration(
                                 gradient: const LinearGradient(
                                   colors: [Color(0xFFC8B8FF), Color(0xFFCCF24D)],
@@ -242,39 +243,39 @@ class _AthleteSettingsScreenState extends State<AthleteSettingsScreen> {
                                   ),
                                 ],
                               ),
-                              child: isWeb
+                              child: isLargeScreen
                                   ? Row(
                                       children: [
-                                        _buildAvatar(athlete.fullname, isWeb),
+                                        _buildAvatar(athlete.fullname, isLargeScreen),
                                         const SizedBox(width: 24),
                                         Expanded(
-                                          child: _buildProfileInfo(athlete, isWeb),
+                                          child: _buildProfileInfo(athlete, isLargeScreen),
                                         ),
                                         const SizedBox(width: 16),
-                                        _buildEditButton(athlete, isWeb),
+                                        _buildEditButton(athlete, isLargeScreen),
                                       ],
                                     )
                                   : Column(
                                       children: [
                                         Row(
                                           children: [
-                                            _buildAvatar(athlete.fullname, isWeb),
+                                            _buildAvatar(athlete.fullname, isLargeScreen),
                                             const SizedBox(width: 14),
                                             Expanded(
-                                              child: _buildProfileInfo(athlete, isWeb),
+                                              child: _buildProfileInfo(athlete, isLargeScreen),
                                             ),
                                           ],
                                         ),
                                         const SizedBox(height: 16),
-                                        _buildEditButton(athlete, isWeb),
+                                        _buildEditButton(athlete, isLargeScreen),
                                       ],
                                     ),
                             ),
 
-                            SizedBox(height: isWeb ? 24 : 14),
+                            SizedBox(height: isLargeScreen ? 24 : 14),
 
                             // Layout responsive para las cards
-                            if (isWeb)
+                            if (isLargeScreen)
                               Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
@@ -284,21 +285,21 @@ class _AthleteSettingsScreenState extends State<AthleteSettingsScreen> {
                                         _InfoCard(
                                           title: 'Datos físicos',
                                           icon: Icons.accessibility_new,
-                                          isWeb: isWeb,
+                                          isLargeScreen: isLargeScreen,
                                           children: [
-                                            _InfoRow(icon: Icons.person_outline, label: 'Género', value: athlete.gender, isWeb: isWeb),
-                                            _InfoRow(icon: Icons.cake_outlined, label: 'Edad', value: '${athlete.age} años', isWeb: isWeb),
+                                            _InfoRow(icon: Icons.person_outline, label: 'Género', value: athlete.gender, isLargeScreen: isLargeScreen),
+                                            _InfoRow(icon: Icons.cake_outlined, label: 'Edad', value: '${athlete.age} años', isLargeScreen: isLargeScreen),
                                             _InfoRow(
                                               icon: Icons.monitor_weight_outlined,
                                               label: 'Peso',
                                               value: '${athlete.weight.toStringAsFixed(1)} kg',
-                                              isWeb: isWeb,
+                                              isLargeScreen: isLargeScreen,
                                             ),
                                             _InfoRow(
                                               icon: Icons.height_outlined,
                                               label: 'Altura',
                                               value: '${athlete.height.toStringAsFixed(0)} cm',
-                                              isWeb: isWeb,
+                                              isLargeScreen: isLargeScreen,
                                             ),
                                           ],
                                         ),
@@ -306,7 +307,7 @@ class _AthleteSettingsScreenState extends State<AthleteSettingsScreen> {
                                         _InfoCard(
                                           title: 'Equipamiento',
                                           icon: Icons.fitness_center,
-                                          isWeb: isWeb,
+                                          isLargeScreen: isLargeScreen,
                                           children: [
                                             if (athlete.equipment.isEmpty)
                                               Padding(
@@ -329,7 +330,7 @@ class _AthleteSettingsScreenState extends State<AthleteSettingsScreen> {
                                                 spacing: 8,
                                                 runSpacing: 8,
                                                 children: [
-                                                  for (final e in athlete.equipment) _ChipTag(text: e, isWeb: isWeb),
+                                                  for (final e in athlete.equipment) _ChipTag(text: e, isLargeScreen: isLargeScreen),
                                                 ],
                                               ),
                                           ],
@@ -342,16 +343,16 @@ class _AthleteSettingsScreenState extends State<AthleteSettingsScreen> {
                                     child: _InfoCard(
                                       title: 'Objetivos y actividad',
                                       icon: Icons.trending_up,
-                                      isWeb: isWeb,
+                                      isLargeScreen: isLargeScreen,
                                       children: [
-                                        _InfoRow(icon: Icons.flag_outlined, label: 'Meta', value: athlete.goal, isWeb: isWeb),
-                                        _InfoRow(icon: Icons.bolt_outlined, label: 'Nivel', value: athlete.activityLevel, isWeb: isWeb),
-                                        _InfoRow(icon: Icons.place_outlined, label: 'Entorno', value: athlete.environment, isWeb: isWeb),
+                                        _InfoRow(icon: Icons.flag_outlined, label: 'Meta', value: athlete.goal, isLargeScreen: isLargeScreen),
+                                        _InfoRow(icon: Icons.bolt_outlined, label: 'Nivel', value: athlete.activityLevel, isLargeScreen: isLargeScreen),
+                                        _InfoRow(icon: Icons.place_outlined, label: 'Entorno', value: athlete.environment, isLargeScreen: isLargeScreen),
                                         _InfoRow(
                                           icon: Icons.schedule_outlined,
                                           label: 'Frecuencia',
                                           value: _freqLabel(athlete.frecuency),
-                                          isWeb: isWeb,
+                                          isLargeScreen: isLargeScreen,
                                         ),
                                       ],
                                     ),
@@ -364,21 +365,21 @@ class _AthleteSettingsScreenState extends State<AthleteSettingsScreen> {
                                   _InfoCard(
                                     title: 'Datos físicos',
                                     icon: Icons.accessibility_new,
-                                    isWeb: isWeb,
+                                    isLargeScreen: isLargeScreen,
                                     children: [
-                                      _InfoRow(icon: Icons.person_outline, label: 'Género', value: athlete.gender, isWeb: isWeb),
-                                      _InfoRow(icon: Icons.cake_outlined, label: 'Edad', value: '${athlete.age} años', isWeb: isWeb),
+                                      _InfoRow(icon: Icons.person_outline, label: 'Género', value: athlete.gender, isLargeScreen: isLargeScreen),
+                                      _InfoRow(icon: Icons.cake_outlined, label: 'Edad', value: '${athlete.age} años', isLargeScreen: isLargeScreen),
                                       _InfoRow(
                                         icon: Icons.monitor_weight_outlined,
                                         label: 'Peso',
                                         value: '${athlete.weight.toStringAsFixed(1)} kg',
-                                        isWeb: isWeb,
+                                        isLargeScreen: isLargeScreen,
                                       ),
                                       _InfoRow(
                                         icon: Icons.height_outlined,
                                         label: 'Altura',
                                         value: '${athlete.height.toStringAsFixed(0)} cm',
-                                        isWeb: isWeb,
+                                        isLargeScreen: isLargeScreen,
                                       ),
                                     ],
                                   ),
@@ -386,16 +387,16 @@ class _AthleteSettingsScreenState extends State<AthleteSettingsScreen> {
                                   _InfoCard(
                                     title: 'Objetivos y actividad',
                                     icon: Icons.trending_up,
-                                    isWeb: isWeb,
+                                    isLargeScreen: isLargeScreen,
                                     children: [
-                                      _InfoRow(icon: Icons.flag_outlined, label: 'Meta', value: athlete.goal, isWeb: isWeb),
-                                      _InfoRow(icon: Icons.bolt_outlined, label: 'Nivel', value: athlete.activityLevel, isWeb: isWeb),
-                                      _InfoRow(icon: Icons.place_outlined, label: 'Entorno', value: athlete.environment, isWeb: isWeb),
+                                      _InfoRow(icon: Icons.flag_outlined, label: 'Meta', value: athlete.goal, isLargeScreen: isLargeScreen),
+                                      _InfoRow(icon: Icons.bolt_outlined, label: 'Nivel', value: athlete.activityLevel, isLargeScreen: isLargeScreen),
+                                      _InfoRow(icon: Icons.place_outlined, label: 'Entorno', value: athlete.environment, isLargeScreen: isLargeScreen),
                                       _InfoRow(
                                         icon: Icons.schedule_outlined,
                                         label: 'Frecuencia',
                                         value: _freqLabel(athlete.frecuency),
-                                        isWeb: isWeb,
+                                        isLargeScreen: isLargeScreen,
                                       ),
                                     ],
                                   ),
@@ -403,7 +404,7 @@ class _AthleteSettingsScreenState extends State<AthleteSettingsScreen> {
                                   _InfoCard(
                                     title: 'Equipamiento',
                                     icon: Icons.fitness_center,
-                                    isWeb: isWeb,
+                                    isLargeScreen: isLargeScreen,
                                     children: [
                                       if (athlete.equipment.isEmpty)
                                         Padding(
@@ -426,7 +427,7 @@ class _AthleteSettingsScreenState extends State<AthleteSettingsScreen> {
                                           spacing: 8,
                                           runSpacing: 8,
                                           children: [
-                                            for (final e in athlete.equipment) _ChipTag(text: e, isWeb: isWeb),
+                                            for (final e in athlete.equipment) _ChipTag(text: e, isLargeScreen: isLargeScreen),
                                           ],
                                         ),
                                     ],
@@ -434,7 +435,7 @@ class _AthleteSettingsScreenState extends State<AthleteSettingsScreen> {
                                 ],
                               ),
 
-                            SizedBox(height: isWeb ? 32 : 24),
+                            SizedBox(height: isLargeScreen ? 32 : 24),
                           ],
                         ),
                       );
@@ -449,7 +450,7 @@ class _AthleteSettingsScreenState extends State<AthleteSettingsScreen> {
     );
   }
 
-  Widget _buildAvatar(String fullname, bool isWeb) {
+  Widget _buildAvatar(String fullname, bool isLargeScreen) {
     return Container(
       decoration: BoxDecoration(
         shape: BoxShape.circle,
@@ -462,28 +463,28 @@ class _AthleteSettingsScreenState extends State<AthleteSettingsScreen> {
         ],
       ),
       child: CircleAvatar(
-        radius: isWeb ? 40 : 32,
+        radius: isLargeScreen ? 40 : 32,
         backgroundColor: purple,
         child: Text(
           _initials(fullname),
           style: TextStyle(
             color: Colors.white,
             fontWeight: FontWeight.w800,
-            fontSize: isWeb ? 22 : 18,
+            fontSize: isLargeScreen ? 22 : 18,
           ),
         ),
       ),
     );
   }
 
-  Widget _buildProfileInfo(AthleteModel athlete, bool isWeb) {
+  Widget _buildProfileInfo(AthleteModel athlete, bool isLargeScreen) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           athlete.fullname,
           style: TextStyle(
-            fontSize: isWeb ? 22 : 18,
+            fontSize: isLargeScreen ? 22 : 18,
             fontWeight: FontWeight.w800,
             color: Colors.black,
           ),
@@ -509,17 +510,17 @@ class _AthleteSettingsScreenState extends State<AthleteSettingsScreen> {
     );
   }
 
-  Widget _buildEditButton(AthleteModel athlete, bool isWeb) {
+  Widget _buildEditButton(AthleteModel athlete, bool isLargeScreen) {
     return SizedBox(
-      width: isWeb ? null : double.infinity,
+      width: isLargeScreen ? null : double.infinity,
       child: ElevatedButton.icon(
         onPressed: () => _goToEdit(athlete),
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color(0xFF1E1E1E),
           foregroundColor: Colors.white,
           padding: EdgeInsets.symmetric(
-            horizontal: isWeb ? 24 : 16,
-            vertical: isWeb ? 16 : 12,
+            horizontal: isLargeScreen ? 24 : 16,
+            vertical: isLargeScreen ? 16 : 12,
           ),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -532,7 +533,7 @@ class _AthleteSettingsScreenState extends State<AthleteSettingsScreen> {
           'Editar Perfil',
           style: TextStyle(
             fontWeight: FontWeight.w700,
-            fontSize: isWeb ? 15 : 14,
+            fontSize: isLargeScreen ? 15 : 14,
           ),
         ),
       ),
@@ -546,20 +547,20 @@ class _InfoCard extends StatelessWidget {
   final String title;
   final IconData icon;
   final List<Widget> children;
-  final bool isWeb;
+  final bool isLargeScreen;
 
   const _InfoCard({
     required this.title,
     required this.icon,
     required this.children,
-    this.isWeb = false,
+    this.isLargeScreen = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: EdgeInsets.all(isWeb ? 20 : 16),
+      padding: EdgeInsets.all(isLargeScreen ? 20 : 16),
       decoration: BoxDecoration(
         gradient: LinearGradient(
           colors: [
@@ -595,7 +596,7 @@ class _InfoCard extends StatelessWidget {
                   ),
                   borderRadius: BorderRadius.circular(10),
                 ),
-                child: Icon(icon, color: Colors.black, size: isWeb ? 22 : 20),
+                child: Icon(icon, color: Colors.black, size: isLargeScreen ? 22 : 20),
               ),
               const SizedBox(width: 12),
               Text(
@@ -603,14 +604,14 @@ class _InfoCard extends StatelessWidget {
                 style: TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w800,
-                  fontSize: isWeb ? 18 : 16,
+                  fontSize: isLargeScreen ? 18 : 16,
                 ),
               ),
             ],
           ),
-          SizedBox(height: isWeb ? 16 : 12),
+          SizedBox(height: isLargeScreen ? 16 : 12),
           Container(
-            padding: EdgeInsets.all(isWeb ? 16 : 12),
+            padding: EdgeInsets.all(isLargeScreen ? 16 : 12),
             decoration: BoxDecoration(
               color: Colors.white.withValues(alpha: 0.95),
               borderRadius: BorderRadius.circular(16),
@@ -629,22 +630,22 @@ class _InfoRow extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
-  final bool isWeb;
+  final bool isLargeScreen;
 
   const _InfoRow({
     required this.icon,
     required this.label,
     required this.value,
-    this.isWeb = false,
+    this.isLargeScreen = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: EdgeInsets.only(bottom: isWeb ? 10 : 8),
+      margin: EdgeInsets.only(bottom: isLargeScreen ? 10 : 8),
       padding: EdgeInsets.symmetric(
-        vertical: isWeb ? 12 : 10,
-        horizontal: isWeb ? 14 : 12,
+        vertical: isLargeScreen ? 12 : 10,
+        horizontal: isLargeScreen ? 14 : 12,
       ),
       decoration: BoxDecoration(
         color: Colors.black.withValues(alpha: 0.02),
@@ -664,17 +665,17 @@ class _InfoRow extends StatelessWidget {
             child: Icon(
               icon,
               color: Colors.black87,
-              size: isWeb ? 20 : 18,
+              size: isLargeScreen ? 20 : 18,
             ),
           ),
-          SizedBox(width: isWeb ? 14 : 10),
+          SizedBox(width: isLargeScreen ? 14 : 10),
           Expanded(
             child: Text(
               label,
               style: TextStyle(
                 color: Colors.black87,
                 fontWeight: FontWeight.w700,
-                fontSize: isWeb ? 15 : 14,
+                fontSize: isLargeScreen ? 15 : 14,
               ),
             ),
           ),
@@ -691,7 +692,7 @@ class _InfoRow extends StatelessWidget {
               style: TextStyle(
                 color: Colors.black,
                 fontWeight: FontWeight.w800,
-                fontSize: isWeb ? 14 : 13,
+                fontSize: isLargeScreen ? 14 : 13,
               ),
             ),
           ),
@@ -703,16 +704,16 @@ class _InfoRow extends StatelessWidget {
 
 class _ChipTag extends StatelessWidget {
   final String text;
-  final bool isWeb;
+  final bool isLargeScreen;
 
-  const _ChipTag({required this.text, this.isWeb = false});
+  const _ChipTag({required this.text, this.isLargeScreen = false});
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.symmetric(
-        horizontal: isWeb ? 16 : 12,
-        vertical: isWeb ? 10 : 8,
+        horizontal: isLargeScreen ? 16 : 12,
+        vertical: isLargeScreen ? 10 : 8,
       ),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
@@ -739,7 +740,7 @@ class _ChipTag extends StatelessWidget {
             style: TextStyle(
               color: Colors.black,
               fontWeight: FontWeight.w700,
-              fontSize: isWeb ? 14 : 13,
+              fontSize: isLargeScreen ? 14 : 13,
             ),
           ),
         ],
@@ -753,22 +754,22 @@ class _EmptyCard extends StatelessWidget {
   final String subtitle;
   final String actionText;
   final VoidCallback onTap;
-  final bool isWeb;
+  final bool isLargeScreen;
 
   const _EmptyCard({
     required this.title,
     required this.subtitle,
     required this.actionText,
     required this.onTap,
-    this.isWeb = false,
+    this.isLargeScreen = false,
   });
 
   @override
   Widget build(BuildContext context) {
     return Center(
       child: Container(
-        constraints: BoxConstraints(maxWidth: isWeb ? 500 : double.infinity),
-        padding: EdgeInsets.all(isWeb ? 40 : 24),
+        constraints: BoxConstraints(maxWidth: isLargeScreen ? 500 : double.infinity),
+        padding: EdgeInsets.all(isLargeScreen ? 40 : 24),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             colors: [
@@ -804,30 +805,30 @@ class _EmptyCard extends StatelessWidget {
               ),
               child: Icon(
                 Icons.person_add,
-                size: isWeb ? 48 : 40,
+                size: isLargeScreen ? 48 : 40,
                 color: Colors.black,
               ),
             ),
-            SizedBox(height: isWeb ? 24 : 20),
+            SizedBox(height: isLargeScreen ? 24 : 20),
             Text(
               title,
               style: TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w800,
-                fontSize: isWeb ? 22 : 18,
+                fontSize: isLargeScreen ? 22 : 18,
               ),
               textAlign: TextAlign.center,
             ),
-            SizedBox(height: isWeb ? 12 : 8),
+            SizedBox(height: isLargeScreen ? 12 : 8),
             Text(
               subtitle,
               textAlign: TextAlign.center,
               style: TextStyle(
                 color: Colors.white70,
-                fontSize: isWeb ? 15 : 14,
+                fontSize: isLargeScreen ? 15 : 14,
               ),
             ),
-            SizedBox(height: isWeb ? 32 : 24),
+            SizedBox(height: isLargeScreen ? 32 : 24),
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
@@ -836,7 +837,7 @@ class _EmptyCard extends StatelessWidget {
                   backgroundColor: const Color(0xFFCCF24D),
                   foregroundColor: Colors.black,
                   padding: EdgeInsets.symmetric(
-                    vertical: isWeb ? 18 : 14,
+                    vertical: isLargeScreen ? 18 : 14,
                   ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
@@ -848,7 +849,7 @@ class _EmptyCard extends StatelessWidget {
                   actionText,
                   style: TextStyle(
                     fontWeight: FontWeight.w800,
-                    fontSize: isWeb ? 16 : 15,
+                    fontSize: isLargeScreen ? 16 : 15,
                   ),
                 ),
               ),
