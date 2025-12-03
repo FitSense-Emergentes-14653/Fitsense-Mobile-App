@@ -25,58 +25,84 @@ class UserNavbar extends StatelessWidget {
           child: Center(
             child: Container(
               constraints: BoxConstraints(maxWidth: maxWidth),
-              padding: EdgeInsets.symmetric(
-                horizontal: isWide ? 32.0 : 20.0,
-                vertical: 10,
+              margin: EdgeInsets.symmetric(
+                horizontal: isWide ? 32.0 : 16.0,
+                vertical: isWide ? 16.0 : 12.0,
               ),
-              color: Colors.transparent,
+              padding: EdgeInsets.symmetric(
+                horizontal: isWide ? 24.0 : 12.0,
+                vertical: isWide ? 16.0 : 12.0,
+              ),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.white.withValues(alpha: 0.15),
+                    Colors.white.withValues(alpha: 0.08),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(28),
+                border: Border.all(
+                  color: Colors.white.withValues(alpha: 0.25),
+                  width: 1.5,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.15),
+                    blurRadius: 20,
+                    spreadRadius: 2,
+                    offset: const Offset(0, 8),
+                  ),
+                ],
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   Expanded(
                     child: _RoundButton(
                       assetPath: 'lib/assets/images/home.png',
-                      label: ' ',
+                      label: 'Inicio',
                       selected: selectedIndex == 0,
                       onTap: () => onTap?.call(0),
                       isWide: isWide,
                     ),
                   ),
-                  SizedBox(width: isWide ? 16.0 : 8.0),
+                  SizedBox(width: isWide ? 12.0 : 6.0),
                   Expanded(
                     child: _RoundButton(
                       icon: Icons.assessment_rounded,
-                      label: ' ',
+                      label: 'Métricas',
                       selected: selectedIndex == 1,
                       onTap: () => onTap?.call(1),
                       isWide: isWide,
                     ),
                   ),
-                  SizedBox(width: isWide ? 16.0 : 8.0),
+                  SizedBox(width: isWide ? 12.0 : 6.0),
                   Expanded(
                     child: _RoundButton(
                       assetPath: 'lib/assets/images/chat.png',
-                      label: ' ',
+                      label: 'Rutinas',
                       selected: selectedIndex == 2,
                       onTap: () => onTap?.call(2),
                       isWide: isWide,
                     ),
                   ),
-                  SizedBox(width: isWide ? 16.0 : 8.0),
+                  SizedBox(width: isWide ? 12.0 : 6.0),
                   Expanded(
                     child: _RoundButton(
                       assetPath: 'lib/assets/images/stars.png',
-                      label: ' ',
+                      label: 'Progreso',
                       selected: selectedIndex == 3,
                       onTap: () => onTap?.call(3),
                       isWide: isWide,
                     ),
                   ),
-                  SizedBox(width: isWide ? 16.0 : 8.0),
+                  SizedBox(width: isWide ? 12.0 : 6.0),
                   Expanded(
                     child: _RoundButton(
                       assetPath: 'lib/assets/images/config.png',
-                      label: ' ',
+                      label: 'Config',
                       selected: selectedIndex == 4,
                       onTap: () => onTap?.call(4),
                       isWide: isWide,
@@ -120,6 +146,8 @@ class _RoundButtonState extends State<_RoundButton>
 
   @override
   Widget build(BuildContext context) {
+    final isSelected = widget.selected;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
@@ -131,49 +159,129 @@ class _RoundButtonState extends State<_RoundButton>
             widget.onTap?.call();
           },
           onTapCancel: () => setState(() => _pressed = false),
-          child: AnimatedScale(
-            scale: _pressed ? 0.88 : 1.0,
-            duration: const Duration(milliseconds: 140),
-            curve: Curves.easeOutBack,
-            child: Container(
-              width: 56,
-              height: 56,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: purple,
-                boxShadow: [
-                  BoxShadow(
-                    color: purple.withValues(alpha: 0.45),
-                    blurRadius: 14,
-                    spreadRadius: 2,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: Center(
-                child: widget.assetPath != null
-                    ? Image.asset(
-                        widget.assetPath!,
-                        width: 30,
-                        height: 30,
-                        color: Colors.white,
-                      )
-                    : Icon(
-                        widget.icon!,
-                        size: 30,
-                        color: Colors.white,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOutCubic,
+            child: Stack(
+              alignment: Alignment.center,
+              children: [
+                // Indicador de selección (anillo exterior)
+                if (isSelected)
+                  AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    width: 68,
+                    height: 68,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: const Color(0xFFCCF24D),
+                        width: 2.5,
                       ),
-              ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFFCCF24D).withValues(alpha: 0.4),
+                          blurRadius: 12,
+                          spreadRadius: 2,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                // Botón principal
+                AnimatedScale(
+                  scale: _pressed ? 0.85 : 1.0,
+                  duration: const Duration(milliseconds: 140),
+                  curve: Curves.easeOutBack,
+                  child: Container(
+                    width: widget.isWide ? 58 : 56,
+                    height: widget.isWide ? 58 : 56,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: isSelected
+                          ? const LinearGradient(
+                              colors: [
+                                Color(0xFF8A5CF6),
+                                Color(0xFFA78BFA),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )
+                          : LinearGradient(
+                              colors: [
+                                purple.withValues(alpha: 0.7),
+                                purple.withValues(alpha: 0.5),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: isSelected
+                              ? purple.withValues(alpha: 0.5)
+                              : purple.withValues(alpha: 0.25),
+                          blurRadius: isSelected ? 16 : 10,
+                          spreadRadius: isSelected ? 2 : 0,
+                          offset: Offset(0, isSelected ? 6 : 4),
+                        ),
+                      ],
+                    ),
+                    child: Center(
+                      child: widget.assetPath != null
+                          ? Image.asset(
+                              widget.assetPath!,
+                              width: isSelected ? 32 : 28,
+                              height: isSelected ? 32 : 28,
+                              color: Colors.white,
+                            )
+                          : Icon(
+                              widget.icon!,
+                              size: isSelected ? 32 : 28,
+                              color: Colors.white,
+                            ),
+                    ),
+                  ),
+                ),
+
+                // Punto indicador superior (cuando está seleccionado)
+                if (isSelected)
+                  Positioned(
+                    top: 0,
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: const Color(0xFFCCF24D),
+                        boxShadow: [
+                          BoxShadow(
+                            color: const Color(0xFFCCF24D).withValues(alpha: 0.6),
+                            blurRadius: 8,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
             ),
           ),
         ),
-        const SizedBox(height: 6),
-        Text(
-          widget.label,
+        const SizedBox(height: 8),
+        AnimatedDefaultTextStyle(
+          duration: const Duration(milliseconds: 250),
           style: TextStyle(
-            fontSize: 12,
-            color: widget.selected ? purple : Colors.black.withValues(alpha: 0.55),
-            fontWeight: widget.selected ? FontWeight.w700 : FontWeight.w500,
+            fontSize: widget.isWide ? 13 : 11,
+            color: isSelected
+                ? Colors.white
+                : Colors.white.withValues(alpha: 0.6),
+            fontWeight: isSelected ? FontWeight.w800 : FontWeight.w600,
+            letterSpacing: 0.3,
+          ),
+          child: Text(
+            widget.label,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],

@@ -62,66 +62,307 @@ class _NotificationSettingsPageState extends State<NotificationSettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isWeb = screenWidth > 600;
+    final maxWidth = isWeb ? 700.0 : screenWidth;
+
     return Scaffold(
       backgroundColor: const Color(0xFF0D0D0D),
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text(
-          "Notifications Settings",
+        centerTitle: !isWeb,
+        title: Text(
+          "Configuración de Notificaciones",
           style: TextStyle(
-            color: Color(0xFFB8B4FF),
+            color: const Color(0xFFB8B4FF),
             fontWeight: FontWeight.bold,
+            fontSize: isWeb ? 24 : 20,
           ),
         ),
       ),
-      body: ListView(
-        children: [
-          _switchTile("General Notifications", general, (v) {
-            setState(() => general = v);
-            _saveSettings();
-            _testNotification();
-          }),
+      body: Center(
+        child: Container(
+          constraints: BoxConstraints(maxWidth: maxWidth),
+          child: ListView(
+            padding: EdgeInsets.symmetric(
+              horizontal: isWeb ? 32 : 16,
+              vertical: isWeb ? 24 : 16,
+            ),
+            children: [
+              // Header informativo
+              Container(
+                padding: EdgeInsets.all(isWeb ? 20 : 16),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFFCCF24D).withValues(alpha: 0.1),
+                      const Color(0xFFC8B8FF).withValues(alpha: 0.1),
+                    ],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: const Color(0xFFCCF24D).withValues(alpha: 0.3),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(
+                      Icons.info_outline,
+                      color: Color(0xFFCCF24D),
+                      size: 24,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Personaliza cómo recibes las notificaciones de FitSense',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: isWeb ? 14 : 13,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              SizedBox(height: isWeb ? 32 : 24),
 
-          _switchTile("Sound", sound, (v) {
-            setState(() => sound = v);
-            _saveSettings();
-            _testNotification();
-          }),
+              // Sección: General
+              _buildSection(
+                'General',
+                Icons.notifications_active,
+                isWeb,
+                [
+                  _switchTile(
+                    "Notificaciones Generales",
+                    "Activar o desactivar todas las notificaciones",
+                    Icons.notifications,
+                    general,
+                    (v) {
+                      setState(() => general = v);
+                      _saveSettings();
+                      _testNotification();
+                    },
+                    isWeb,
+                  ),
+                  _switchTile(
+                    "Recordatorios",
+                    "Recibe recordatorios de entrenamientos y metas",
+                    Icons.alarm,
+                    reminders,
+                    (v) {
+                      setState(() => reminders = v);
+                      _saveSettings();
+                    },
+                    isWeb,
+                  ),
+                ],
+              ),
 
-          _switchTile("Don't Disturb Mode", dnd, (v) {
-            setState(() => dnd = v);
-            _saveSettings();
-          }),
+              SizedBox(height: isWeb ? 24 : 16),
 
-          _switchTile("Vibrate", vibrate, (v) {
-            setState(() => vibrate = v);
-            _saveSettings();
-          }),
+              // Sección: Sonido y Vibración
+              _buildSection(
+                'Sonido y Vibración',
+                Icons.volume_up,
+                isWeb,
+                [
+                  _switchTile(
+                    "Sonido",
+                    "Reproducir sonido con las notificaciones",
+                    Icons.music_note,
+                    sound,
+                    (v) {
+                      setState(() => sound = v);
+                      _saveSettings();
+                      _testNotification();
+                    },
+                    isWeb,
+                  ),
+                  _switchTile(
+                    "Vibración",
+                    "Vibrar cuando llegue una notificación",
+                    Icons.vibration,
+                    vibrate,
+                    (v) {
+                      setState(() => vibrate = v);
+                      _saveSettings();
+                    },
+                    isWeb,
+                  ),
+                ],
+              ),
 
-          _switchTile("Lock Screen", lockscreen, (v) {
-            setState(() => lockscreen = v);
-            _saveSettings();
-            _testNotification();
-          }),
+              SizedBox(height: isWeb ? 24 : 16),
 
-          _switchTile("Reminders", reminders, (v) {
-            setState(() => reminders = v);
-            _saveSettings();
-          }),
+              // Sección: Privacidad
+              _buildSection(
+                'Privacidad',
+                Icons.lock,
+                isWeb,
+                [
+                  _switchTile(
+                    "Mostrar en Pantalla Bloqueada",
+                    "Ver notificaciones cuando el dispositivo está bloqueado",
+                    Icons.lock_clock,
+                    lockscreen,
+                    (v) {
+                      setState(() => lockscreen = v);
+                      _saveSettings();
+                      _testNotification();
+                    },
+                    isWeb,
+                  ),
+                  _switchTile(
+                    "Modo No Molestar",
+                    "Silenciar notificaciones durante horas específicas",
+                    Icons.do_not_disturb,
+                    dnd,
+                    (v) {
+                      setState(() => dnd = v);
+                      _saveSettings();
+                    },
+                    isWeb,
+                  ),
+                ],
+              ),
 
-          const SizedBox(height: 20),
-        ],
+              SizedBox(height: isWeb ? 32 : 24),
+
+              // Botón de prueba
+              Center(
+                child: ElevatedButton.icon(
+                  onPressed: general ? _testNotification : null,
+                  icon: const Icon(Icons.send),
+                  label: const Text('Probar Notificación'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFCCF24D),
+                    foregroundColor: Colors.black,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isWeb ? 32 : 24,
+                      vertical: isWeb ? 16 : 12,
+                    ),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    disabledBackgroundColor: Colors.grey.shade700,
+                    disabledForegroundColor: Colors.grey.shade500,
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+            ],
+          ),
+        ),
       ),
     );
   }
 
-  Widget _switchTile(String title, bool value, Function(bool) onChanged) {
-    return SwitchListTile(
-      title: Text(title, style: const TextStyle(color: Colors.white)),
-      value: value,
-      activeColor: const Color(0xFFD4FF47),
-      onChanged: onChanged,
+  Widget _buildSection(
+    String title,
+    IconData icon,
+    bool isWeb,
+    List<Widget> children,
+  ) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.only(left: 4, bottom: 12),
+          child: Row(
+            children: [
+              Icon(
+                icon,
+                color: const Color(0xFFCCF24D),
+                size: isWeb ? 24 : 20,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: isWeb ? 18 : 16,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        ),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(
+              color: Colors.white.withValues(alpha: 0.1),
+            ),
+          ),
+          child: Column(
+            children: children,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _switchTile(
+    String title,
+    String subtitle,
+    IconData icon,
+    bool value,
+    Function(bool) onChanged,
+    bool isWeb,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(
+            color: Colors.white.withValues(alpha: 0.05),
+            width: 1,
+          ),
+        ),
+      ),
+      child: SwitchListTile(
+        contentPadding: EdgeInsets.symmetric(
+          horizontal: isWeb ? 20 : 16,
+          vertical: isWeb ? 8 : 4,
+        ),
+        secondary: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: value
+                ? const Color(0xFFCCF24D).withValues(alpha: 0.2)
+                : Colors.white.withValues(alpha: 0.05),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(
+            icon,
+            color: value ? const Color(0xFFCCF24D) : Colors.white54,
+            size: isWeb ? 24 : 20,
+          ),
+        ),
+        title: Text(
+          title,
+          style: TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.w600,
+            fontSize: isWeb ? 15 : 14,
+          ),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: TextStyle(
+            color: Colors.white70,
+            fontSize: isWeb ? 13 : 12,
+          ),
+        ),
+        value: value,
+        activeThumbColor: const Color(0xFFCCF24D),
+        activeTrackColor: const Color(0xFFCCF24D).withValues(alpha: 0.5),
+        inactiveThumbColor: Colors.grey.shade600,
+        inactiveTrackColor: Colors.grey.shade800,
+        onChanged: onChanged,
+      ),
     );
   }
 }

@@ -48,6 +48,7 @@ class _AthleteHomeScreenState extends State<AthleteHomeScreen> {
 
           return Stack(
             children: [
+              // Content area con transiciones suaves
               Positioned.fill(
                 child: Center(
                   child: Container(
@@ -58,53 +59,172 @@ class _AthleteHomeScreenState extends State<AthleteHomeScreen> {
                       horizontal: isWide ? 24.0 : 16.0,
                     ),
                     child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 300),
-                      child: _screens[_index],
+                      duration: const Duration(milliseconds: 350),
+                      switchInCurve: Curves.easeInOutCubic,
+                      switchOutCurve: Curves.easeInOutCubic,
+                      transitionBuilder: (child, animation) {
+                        return FadeTransition(
+                          opacity: animation,
+                          child: SlideTransition(
+                            position: Tween<Offset>(
+                              begin: const Offset(0.02, 0),
+                              end: Offset.zero,
+                            ).animate(CurvedAnimation(
+                              parent: animation,
+                              curve: Curves.easeOutCubic,
+                            )),
+                            child: child,
+                          ),
+                        );
+                      },
+                      child: Container(
+                        key: ValueKey(_index),
+                        child: _screens[_index],
+                      ),
                     ),
                   ),
                 ),
               ),
+
+              // Botón de chatbot mejorado con glassmorphism
               SafeArea(
                 minimum: EdgeInsets.only(
                   right: isWide ? 32.0 : 20.0,
-                  bottom: 12 + UserNavbar.kHeight,
+                  bottom: 16 + UserNavbar.kHeight,
                 ),
                 child: Align(
                   alignment: Alignment.bottomRight,
-                  child: FloatingActionButton.extended(
-                    heroTag: 'athlete_chatbot',
-                    onPressed: _openChatbot,
-                    backgroundColor: const Color(0xFF8A5CF6),
-                    foregroundColor: Colors.white,
-                    icon: const Icon(Icons.chat_bubble_outline_rounded),
-                    label: const Text(
-                      'Chat',
-                      style: TextStyle(fontWeight: FontWeight.w700),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(30),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF8A5CF6).withValues(alpha: 0.4),
+                          blurRadius: 20,
+                          spreadRadius: 2,
+                          offset: const Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: _openChatbot,
+                        borderRadius: BorderRadius.circular(30),
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: isWide ? 24 : 20,
+                            vertical: isWide ? 16 : 14,
+                          ),
+                          decoration: BoxDecoration(
+                            gradient: const LinearGradient(
+                              colors: [
+                                Color(0xFF8A5CF6),
+                                Color(0xFFA78BFA),
+                              ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(30),
+                            border: Border.all(
+                              color: Colors.white.withValues(alpha: 0.2),
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.all(6),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.2),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: Icon(
+                                  Icons.smart_toy_rounded,
+                                  color: Colors.white,
+                                  size: isWide ? 22 : 20,
+                                ),
+                              ),
+                              SizedBox(width: isWide ? 12 : 10),
+                              Text(
+                                isWide ? 'Asistente IA' : 'Chat IA',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                  fontSize: isWide ? 16 : 15,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Container(
+                                padding: const EdgeInsets.all(4),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFCCF24D),
+                                  borderRadius: BorderRadius.circular(8),
+                                ),
+                                child: const Icon(
+                                  Icons.auto_awesome,
+                                  color: Colors.black,
+                                  size: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
               ),
-              // Barra de navegación
+
+              // Barra de navegación mejorada
               Positioned(
                 left: 0,
                 right: 0,
                 bottom: 0,
-                child: UserNavbar(
-                  selectedIndex: _index,
-                  onTap: (index) {
-                    if (index == 4) {
-                      // Configuración
-                      Navigator.of(context).push(
-                        PageRouteBuilder(
-                          transitionDuration: const Duration(milliseconds: 300),
-                          pageBuilder: (_, __, ___) => AthleteSettingsScreen(userId: widget.userId),
-                          transitionsBuilder: (_, a, __, c) => FadeTransition(opacity: a, child: c),
-                        ),
-                      );
-                    } else {
-                      setState(() => _index = index);
-                    }
-                  },
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withValues(alpha: 0.05),
+                      ],
+                    ),
+                  ),
+                  child: UserNavbar(
+                    selectedIndex: _index,
+                    onTap: (index) {
+                      if (index == 4) {
+                        // Configuración con animación
+                        Navigator.of(context).push(
+                          PageRouteBuilder(
+                            transitionDuration: const Duration(milliseconds: 350),
+                            pageBuilder: (_, __, ___) => AthleteSettingsScreen(userId: widget.userId),
+                            transitionsBuilder: (_, animation, __, child) {
+                              return FadeTransition(
+                                opacity: animation,
+                                child: SlideTransition(
+                                  position: Tween<Offset>(
+                                    begin: const Offset(0.1, 0),
+                                    end: Offset.zero,
+                                  ).animate(CurvedAnimation(
+                                    parent: animation,
+                                    curve: Curves.easeOutCubic,
+                                  )),
+                                  child: child,
+                                ),
+                              );
+                            },
+                          ),
+                        );
+                      } else {
+                        setState(() => _index = index);
+                      }
+                    },
+                  ),
                 ),
               ),
             ],

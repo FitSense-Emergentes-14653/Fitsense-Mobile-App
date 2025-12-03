@@ -4,9 +4,12 @@ Aplicación móvil y web para gestión de entrenamiento físico y nutrición.
 
 ## 🚀 Deploy Status
 
-✅ **Compilado para Web** - Listo para desplegar  
-📦 **Build Size**: ~3 MB  
-🔗 **Backend**: Railway (Producción)
+✅ **En Producción** - https://fitsense-2b6d4.web.app  
+📦 **Build Size**: ~3 MB (39 archivos)  
+🔗 **Backend**: Railway (Producción)  
+🔥 **Hosting**: Firebase (fitsense-2b6d4)
+
+**Última actualización**: 2 de Diciembre, 2025
 
 ---
 
@@ -124,11 +127,7 @@ flutter build web --release
 
 ## 📚 Documentación Adicional
 
-- 📖 [README_DEPLOY.md](README_DEPLOY.md) - Guía completa de deploy
-- 📖 [DEPLOY.md](DEPLOY.md) - Instrucciones detalladas Firebase
-- 📖 [NODE_UPDATE_REQUIRED.md](NODE_UPDATE_REQUIRED.md) - Actualizar Node.js
-- 📖 [PLATFORM_DETECTION.md](PLATFORM_DETECTION.md) - Detección de plataforma
-- 📖 [ROADMAP.md](ROADMAP.md) - Roadmap del proyecto
+
 
 ---
 
@@ -136,9 +135,7 @@ flutter build web --release
 
 ### **Errores comunes**
 
-- **Node.js versión incompatible**: Ver [NODE_UPDATE_REQUIRED.md](NODE_UPDATE_REQUIRED.md)
-- **Firebase CLI no funciona**: `npm install -g firebase-tools`
-- **Build falla**: `flutter clean && flutter pub get`
+
 
 ---
 
