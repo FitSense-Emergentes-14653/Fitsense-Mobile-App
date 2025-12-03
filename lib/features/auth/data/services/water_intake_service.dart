@@ -12,7 +12,7 @@ import '../../domain/models/water_intake_model.dart';
 /// - PUT  /hydration/goal/{athleteId}?hydrationGoal={goal} - Actualizar meta de hidratación
 ///
 /// Conversión: 1 vaso = 250ml
-/// Swagger UI: http://localhost:8080/swagger-ui/index.html#/Hydration
+/// Swagger UI: https://fitsense-backend-services-production.up.railway.app/swagger-ui/index.html#/Hydration
 class WaterIntakeService {
   final SessionService _session = SessionService();
 
